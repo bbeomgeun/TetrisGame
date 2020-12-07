@@ -1,9 +1,4 @@
-import java.awt.Color;
-import java.awt.GridLayout;
-
-import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JPanel;
 
 public class practice extends JFrame{
 //jFrame안에 만든 도형을 넣는 방식으로 진행

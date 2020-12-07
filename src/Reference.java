@@ -74,12 +74,10 @@ class Shape{
 				break;
 		}
 	}
-
 	public Element[] transferArray(){ // 랜덤 도형 넘버를 입력 받아서 모양배열을 구성한 뒤, 그리기 위해 배열을 리턴해준다.
 		return current;
 	}
 }
-
 
 public class Reference extends JFrame implements KeyListener{
 	// 1. GUI 화면구성
@@ -97,17 +95,13 @@ public class Reference extends JFrame implements KeyListener{
 	
 	static boolean needShape = true;
 	
+	int recordArray[][]; // 기록용 배열
+	
 	JButton b[][];
 	int shapeNumber; // random함수로 0~6까지 나와서 makeShape함수의 변수로 사용
 	Shape randomFigure; // makeShape의 결과물(Element 배열을 가지고 있다)
 	Element[] eleNew; // randomFigure의 리턴값을 받을 Element 배열
 	Color colorBox[] = {Color.red, Color.blue, Color.yellow, Color.gray, Color.pink, Color.green, Color.orange};
-	
-	public Shape makeShape(int shapeNumber) {
-		Shape randomShape = new Shape(shapeNumber);
-		
-		return randomShape;
-	}
 	
 	public Reference() {
 		JMenuBar menuBar = new JMenuBar();
@@ -145,6 +139,7 @@ public class Reference extends JFrame implements KeyListener{
 			@Override
 			public void run() {
 				try {
+					makeRecordArray();
 					while(true) {
 						if(needShape) {
 							shapeNumber = (int)Math.floor(Math.random()*7);// 0~6 
@@ -156,7 +151,10 @@ public class Reference extends JFrame implements KeyListener{
 						// 임시 배경 reset 코드
 						for(int row = 0 ; row < formHeight ; row++) {
 							for(int col = 0 ; col < formWidth ; col++) {
-								b[row][col].setBackground(Color.white);
+								if(recordArray[row][col] == -1)
+									b[row][col].setBackground(Color.white);
+								else
+									b[row][col].setBackground(colorBox[recordArray[row][col]]);
 							}
 						}// 또한 테트리스판 지우는 코드 필요 ( 이것은 막 지울것이 아니라 20*10 배열에 테트리스데이터를 저장해두고 그것을 불러오는 형식으로 해야 바닥에 내려간 테트리스도 불러올수있겠다)
 						
@@ -218,19 +216,25 @@ public class Reference extends JFrame implements KeyListener{
 		
 	}
 	
+	public Shape makeShape(int shapeNumber) {
+		Shape randomShape = new Shape(shapeNumber);
+		
+		return randomShape;
+	}
+	
 	public void makingNewShape() {
 		shapeNumber = (int)Math.floor(Math.random()*7);// 0~6 
 		randomFigure = makeShape(shapeNumber);
 	}
 	
-	public Element[] moveShape(Element[] currentElement, int direction) {
+	public Element[] moveShape(Element[] currentElement, int direction) { // 코드 단순화하기
 		// 1. 못 움직이는 경우 ( x나 y가 jFrame을 벗어나는 경우)
 		// 2. 움직이는 경우 (좌표를 더해준다)
-		boolean flag = true;
+		boolean flag = false; // 충돌플래그 = true면 충돌
 		
 		Element [] updateElement = new Element[4];
 		for(int i = 0 ; i < 4 ; i++) {
-			updateElement[i] = new Element(0,0,0);
+			updateElement[i] = new Element(0,0,currentElement[i].colorNum);
 		}
 		switch (direction) {
 		case 0: // right
@@ -242,11 +246,11 @@ public class Reference extends JFrame implements KeyListener{
 				updateElement[i].centerWidth = tempWidth;
 
 				if(tempWidth > formWidth - 1) { // 오른쪽 이동이므로 Width의 경계값을 넘어가면 flag를 변경한다.
-					flag = false;
+					flag = true; // 충돌
 					break;
 				}
 			}
-			if(flag == true) {
+			if(flag == false) {
 				return updateElement; // 이동이 가능하면 update배열을 리턴
 			}
 			else {
@@ -262,11 +266,11 @@ public class Reference extends JFrame implements KeyListener{
 				updateElement[i].centerWidth = tempWidth;
 
 				if(tempWidth < 0) { // 왼쪽 이동이므로 0의 경계값을 넘어가면 flag를 변경한다.
-					flag = false;
+					flag = true;
 					break;
 				}
 			}
-			if(flag == true) {
+			if(flag == false) {
 				return updateElement; // 이동이 가능하면 update배열을 리턴
 			}
 			else {
@@ -282,19 +286,50 @@ public class Reference extends JFrame implements KeyListener{
 				updateElement[i].centerWidth = tempWidth;
 
 				if(tempHeight > formHeight - 1) { // 아래 이동이므로 Height의 경계값을 넘어가면 flag를 변경한다.
-					flag = false;
+					flag = true;
 					needShape = true;
 					break;
 				}
 			}
-			if(flag == true) {
+			
+			if(!flag && checkShapetoShape(updateElement)) { // 경계체크
+				flag = true;
+				needShape = true;
+			}
+			
+			if(flag == false) {
 				return updateElement; // 이동이 가능하면 update배열을 리턴
 			}
 			else {
+				addShapeToRecord(currentElement);
 				return currentElement; // 이동이 불가능하면 기존 배열을 리턴
 			}
 		}
 		return updateElement;
+	}
+	
+	public void makeRecordArray() { // record용 array 20*10배열 초기화
+		recordArray = new int[formHeight][formWidth];
+		for(int i = 0 ; i < formHeight ; i++) {
+			for(int j = 0 ; j < formWidth ; j++) {
+				recordArray[i][j] = -1;
+			}
+		}
+	}
+	public void addShapeToRecord(Element[] shape) { // 바닥에 닿았을시 array에 입력
+		for(int i = 0 ; i < 4 ; i++) {
+			recordArray[shape[i].centerHeight][shape[i].centerWidth] = shape[i].colorNum;
+		}
+	}
+	public boolean checkShapetoShape(Element[] shape) {  // 나중에 여기에 경계값 check까지 넣어서 코드 단순화하기
+		boolean checkFlag = false;
+		for(int i = 0 ; i < 4 ; i++) {
+			if( recordArray[shape[i].centerHeight][shape[i].centerWidth] != -1) {
+				checkFlag = true;
+				break;
+			}
+		}
+		return checkFlag;
 	}
 }
 

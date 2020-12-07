@@ -95,6 +95,8 @@ public class Reference extends JFrame implements KeyListener{
 	static int downDirection = 2;
 	static int rotation = 77;
 	
+	static boolean needShape = true;
+	
 	JButton b[][];
 	int shapeNumber; // random함수로 0~6까지 나와서 makeShape함수의 변수로 사용
 	Shape randomFigure; // makeShape의 결과물(Element 배열을 가지고 있다)
@@ -139,26 +141,35 @@ public class Reference extends JFrame implements KeyListener{
 			}
 		setVisible(true);
 		
-		shapeNumber = (int)Math.floor(Math.random()*7);// 0~6 
-		randomFigure = makeShape(shapeNumber);
-
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
 				try {
-					eleNew = randomFigure.transferArray();
 					while(true) {
+						if(needShape) {
+							shapeNumber = (int)Math.floor(Math.random()*7);// 0~6 
+							randomFigure = makeShape(shapeNumber);
+							eleNew = randomFigure.transferArray();
+							needShape = false;
+						}
+						
+						// 임시 배경 reset 코드
+						for(int row = 0 ; row < formHeight ; row++) {
+							for(int col = 0 ; col < formWidth ; col++) {
+								b[row][col].setBackground(Color.white);
+							}
+						}// 또한 테트리스판 지우는 코드 필요 ( 이것은 막 지울것이 아니라 20*10 배열에 테트리스데이터를 저장해두고 그것을 불러오는 형식으로 해야 바닥에 내려간 테트리스도 불러올수있겠다)
+						
+						// 그리기 코드
 						for(int i = 0 ; i < 4 ; i++) {
 							JButton jb = b[eleNew[i].centerHeight][eleNew[i].centerWidth];
 							jb.setBackground(colorBox[shapeNumber]);
 						}
 						eleNew = moveShape(eleNew, downDirection);
-						// 또한 테트리스판 지우는 코드 필요 ( 이것은 막 지울것이 아니라 20*10 배열에 테트리스데이터를 저장해두고 그것을 불러오는 형식으로 해야 바닥에 내려간 테트리스도 불러올수있겠다)
-								Thread.sleep(1000);
-						//떨어지는 코드
+						
+						Thread.sleep(500);
 					}
 				} catch (Exception e) {
-					// TODO: handle exception
 					System.out.println(e);
 				}
 				
@@ -173,13 +184,11 @@ public class Reference extends JFrame implements KeyListener{
 
 	@Override
 	public void keyTyped(KeyEvent e) {
-		// TODO Auto-generated method stub
-		
+	
 	}
 
 	@Override
 	public void keyPressed(KeyEvent e) {
-		// TODO Auto-generated method stub
 		switch(e.getKeyCode()) {
 		case KeyEvent.VK_UP: // UP
 			break;
@@ -209,11 +218,20 @@ public class Reference extends JFrame implements KeyListener{
 		
 	}
 	
+	public void makingNewShape() {
+		shapeNumber = (int)Math.floor(Math.random()*7);// 0~6 
+		randomFigure = makeShape(shapeNumber);
+	}
+	
 	public Element[] moveShape(Element[] currentElement, int direction) {
 		// 1. 못 움직이는 경우 ( x나 y가 jFrame을 벗어나는 경우)
 		// 2. 움직이는 경우 (좌표를 더해준다)
 		boolean flag = true;
-		Element[] updateElement = currentElement.clone();
+		
+		Element [] updateElement = new Element[4];
+		for(int i = 0 ; i < 4 ; i++) {
+			updateElement[i] = new Element(0,0,0);
+		}
 		switch (direction) {
 		case 0: // right
 			for(int i = 0 ; i < 4 ; i++) {
@@ -223,7 +241,7 @@ public class Reference extends JFrame implements KeyListener{
 				updateElement[i].centerHeight = tempHeight;
 				updateElement[i].centerWidth = tempWidth;
 
-				if(tempWidth > formWidth) { // 오른쪽 이동이므로 Width의 경계값을 넘어가면 flag를 변경한다.
+				if(tempWidth > formWidth - 1) { // 오른쪽 이동이므로 Width의 경계값을 넘어가면 flag를 변경한다.
 					flag = false;
 					break;
 				}
@@ -263,8 +281,9 @@ public class Reference extends JFrame implements KeyListener{
 				updateElement[i].centerHeight = tempHeight;
 				updateElement[i].centerWidth = tempWidth;
 
-				if(tempWidth > formHeight) { // 아래 이동이므로 Height의 경계값을 넘어가면 flag를 변경한다.
+				if(tempHeight > formHeight - 1) { // 아래 이동이므로 Height의 경계값을 넘어가면 flag를 변경한다.
 					flag = false;
+					needShape = true;
 					break;
 				}
 			}

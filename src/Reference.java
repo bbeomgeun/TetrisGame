@@ -1,7 +1,6 @@
 import java.awt.Color;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
@@ -12,13 +11,13 @@ import javax.swing.JMenuBar;
 
 class Element{
 	//중심점 x,y를 잡고 이것을 중심으로 +-으로 도형 표현할 것이다.
-	int centerX; // 중심점 X좌표
-	int centerY; // 중심점 Y좌표
+	int centerHeight; // 중심점 X좌표
+	int centerWidth; // 중심점 Y좌표
 	int colorNum;
 	Element(int x, int y, int color){
-		this.centerX = x;
-		this.centerY = y;
-		this.colorNum = color;
+		this.centerHeight = x;
+		this.centerWidth = y;
+		this.colorNum = color; // 지울까 고민중(현재 사용 X)
 	}
 }
 
@@ -40,8 +39,8 @@ class Shape{
 			case 1: // ㅣ 모양
 				current[0] = new Element(height, width, 1);
 				current[1] = new Element(height+1, width, 1);
-				current[2] = new Element(height+1, width, 1);
-				current[3] = new Element(height+1, width, 1);
+				current[2] = new Element(height+2, width, 1);
+				current[3] = new Element(height+3, width, 1);
 				break;
 			case 2: // ㅁ 모양
 				current[0] = new Element(height, width, 2);
@@ -91,8 +90,15 @@ public class Reference extends JFrame implements KeyListener{
 	// 6. 순서도 작성
 	static int formHeight = 20;
 	static int formWidth = 10;
-	JButton b[][];
+	static int rightDirection = 0;
+	static int leftDirection = 1;
+	static int downDirection = 2;
+	static int rotation = 77;
 	
+	JButton b[][];
+	int shapeNumber; // random함수로 0~6까지 나와서 makeShape함수의 변수로 사용
+	Shape randomFigure; // makeShape의 결과물(Element 배열을 가지고 있다)
+	Element[] eleNew; // randomFigure의 리턴값을 받을 Element 배열
 	Color colorBox[] = {Color.red, Color.blue, Color.yellow, Color.gray, Color.pink, Color.green, Color.orange};
 	
 	public Shape makeShape(int shapeNumber) {
@@ -115,6 +121,12 @@ public class Reference extends JFrame implements KeyListener{
 
 		setLayout(new GridLayout(formHeight, formWidth));
 		setSize(500, 1000);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // 정상 종료
+		
+		this.addKeyListener(new KeyAdapter() {
+			
+		});
+		
 		b = new JButton[formHeight][formWidth];
 		
 		for(int row = 0 ; row < formHeight ; row++) {
@@ -122,61 +134,36 @@ public class Reference extends JFrame implements KeyListener{
 				b[row][col] = new JButton();
 				add(b[row][col]);
 				JButton bj = b[row][col];
+				bj.addKeyListener(this);
 				}
 			}
 		setVisible(true);
 		
-		int shapeNumber = (int)Math.floor(Math.random()*7);// 0~6 
-		
-		for(int i = 0 ; i < 4 ; i++) {
-			Shape randomFigure = makeShape(shapeNumber);
-			Element[] eleNew = randomFigure.transferArray();
-			JButton jb = b[eleNew[i].centerX][eleNew[i].centerY];
-			jb.setBackground(colorBox[shapeNumber]);
-		}
-		
-		
-//		for(int row = 0 ; row < formHeight ; row++) {
-//			for(int col = 0 ; col < formWidth ; col++) {
-//				b[row][col] = new JButton();
-//				add(b[row][col]);
-//				JButton bj = b[row][col];
-//				
-//				
-//				b[row][col].addActionListener(new ActionListener() {
-//					
-//					@Override
-//					public void actionPerformed(ActionEvent e) {
-//						bj.setBackground(Color.DARK_GRAY);
-//						
-//					}
-//				});
-//			}
-//		}
+		shapeNumber = (int)Math.floor(Math.random()*7);// 0~6 
+		randomFigure = makeShape(shapeNumber);
 
-//		new Thread(new Runnable() {
-//			@Override
-//			public void run() {
-//				try {
-//					while(true) {
-//						int shapeNumber = (int)Math.floor(Math.random()*7);// 0~6 
-//						
-//						for(int i = 0 ; i < 4 ; i++) {
-//							Shape randomFigure = makeShape(shapeNumber);
-//							Element[] eleNew = randomFigure.transferArray();
-//							JButton jb = b[eleNew[i].centerX][eleNew[i].centerY];
-//							jb.setBackground(colorBox[shapeNumber]);
-//						}
-//								Thread.sleep(1000);
-//								repaint();
-//						//떨어지는 코드
-//					}
-//				} catch (Exception e) {
-//					// TODO: handle exception
-//				}
-//				
-//			}
-//		}).run();
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					eleNew = randomFigure.transferArray();
+					while(true) {
+						for(int i = 0 ; i < 4 ; i++) {
+							JButton jb = b[eleNew[i].centerHeight][eleNew[i].centerWidth];
+							jb.setBackground(colorBox[shapeNumber]);
+						}
+						eleNew = moveShape(eleNew, downDirection);
+						// 또한 테트리스판 지우는 코드 필요 ( 이것은 막 지울것이 아니라 20*10 배열에 테트리스데이터를 저장해두고 그것을 불러오는 형식으로 해야 바닥에 내려간 테트리스도 불러올수있겠다)
+								Thread.sleep(1000);
+						//떨어지는 코드
+					}
+				} catch (Exception e) {
+					// TODO: handle exception
+					System.out.println(e);
+				}
+				
+			}
+		}).run();
 	}
 
 
@@ -198,12 +185,15 @@ public class Reference extends JFrame implements KeyListener{
 			break;
 			
 		case KeyEvent.VK_DOWN:
+			moveShape(eleNew, downDirection);
 			break;
 		
 		case KeyEvent.VK_LEFT:
+			moveShape(eleNew, leftDirection);
 			break;
 			
 		case KeyEvent.VK_RIGHT:
+			moveShape(eleNew, rightDirection);
 			break;
 			
 		case KeyEvent.VK_SPACE:
@@ -217,6 +207,75 @@ public class Reference extends JFrame implements KeyListener{
 	public void keyReleased(KeyEvent e) {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	public Element[] moveShape(Element[] currentElement, int direction) {
+		// 1. 못 움직이는 경우 ( x나 y가 jFrame을 벗어나는 경우)
+		// 2. 움직이는 경우 (좌표를 더해준다)
+		boolean flag = true;
+		Element[] updateElement = currentElement.clone();
+		switch (direction) {
+		case 0: // right
+			for(int i = 0 ; i < 4 ; i++) {
+				int tempHeight = currentElement[i].centerHeight; // 높이는 그대로
+				int tempWidth = currentElement[i].centerWidth + 1; // 오른쪽 이동이므로 가로좌표 + 1
+				// return용 배열 복사해두기
+				updateElement[i].centerHeight = tempHeight;
+				updateElement[i].centerWidth = tempWidth;
+
+				if(tempWidth > formWidth) { // 오른쪽 이동이므로 Width의 경계값을 넘어가면 flag를 변경한다.
+					flag = false;
+					break;
+				}
+			}
+			if(flag == true) {
+				return updateElement; // 이동이 가능하면 update배열을 리턴
+			}
+			else {
+				return currentElement; // 이동이 불가능하면 기존 배열을 리턴
+			}
+		
+		case 1: // left
+			for(int i = 0 ; i < 4 ; i++) {
+				int tempHeight = currentElement[i].centerHeight;
+				int tempWidth = currentElement[i].centerWidth - 1; // 왼쪽 이동이므로 가로좌표 - 1
+				// return용 배열 복사해두기
+				updateElement[i].centerHeight = tempHeight;
+				updateElement[i].centerWidth = tempWidth;
+
+				if(tempWidth < 0) { // 왼쪽 이동이므로 0의 경계값을 넘어가면 flag를 변경한다.
+					flag = false;
+					break;
+				}
+			}
+			if(flag == true) {
+				return updateElement; // 이동이 가능하면 update배열을 리턴
+			}
+			else {
+				return currentElement; // 이동이 불가능하면 기존 배열을 리턴
+			}
+			
+		case 2: // down
+			for(int i = 0 ; i < 4 ; i++) {
+				int tempHeight = currentElement[i].centerHeight + 1;  // 아래 이동이므로 세로좌표 + 1
+				int tempWidth = currentElement[i].centerWidth;
+				// return용 배열 복사해두기
+				updateElement[i].centerHeight = tempHeight;
+				updateElement[i].centerWidth = tempWidth;
+
+				if(tempWidth > formHeight) { // 아래 이동이므로 Height의 경계값을 넘어가면 flag를 변경한다.
+					flag = false;
+					break;
+				}
+			}
+			if(flag == true) {
+				return updateElement; // 이동이 가능하면 update배열을 리턴
+			}
+			else {
+				return currentElement; // 이동이 불가능하면 기존 배열을 리턴
+			}
+		}
+		return updateElement;
 	}
 }
 

@@ -2,7 +2,6 @@ import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -79,7 +78,7 @@ class Shape{
 	}
 }
 
-public class Reference extends JFrame implements KeyListener{
+public class Reference extends JFrame{
 	// 1. GUI 화면구성
 	// 2. GUI 메뉴 구성
 	// 3. Thread
@@ -119,10 +118,6 @@ public class Reference extends JFrame implements KeyListener{
 		setSize(500, 1000);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // 정상 종료
 		
-		this.addKeyListener(new KeyAdapter() {
-			
-		});
-		
 		b = new JButton[formHeight][formWidth];
 		
 		for(int row = 0 ; row < formHeight ; row++) {
@@ -130,7 +125,7 @@ public class Reference extends JFrame implements KeyListener{
 				b[row][col] = new JButton();
 				add(b[row][col]);
 				JButton bj = b[row][col];
-				bj.addKeyListener(this);
+				bj.addKeyListener(new MyKeyListener());
 				}
 			}
 		setVisible(true);
@@ -156,7 +151,7 @@ public class Reference extends JFrame implements KeyListener{
 								else
 									b[row][col].setBackground(colorBox[recordArray[row][col]]);
 							}
-						}// 또한 테트리스판 지우는 코드 필요 ( 이것은 막 지울것이 아니라 20*10 배열에 테트리스데이터를 저장해두고 그것을 불러오는 형식으로 해야 바닥에 내려간 테트리스도 불러올수있겠다)
+						}
 						
 						// 그리기 코드
 						for(int i = 0 ; i < 4 ; i++) {
@@ -164,7 +159,7 @@ public class Reference extends JFrame implements KeyListener{
 							jb.setBackground(colorBox[shapeNumber]);
 						}
 						eleNew = moveShape(eleNew, downDirection);
-						eleNew = moveShape(eleNew, rotationDirection);
+						eleNew = moveShape(eleNew, leftDirection);
 						
 						Thread.sleep(500);
 					}
@@ -181,42 +176,7 @@ public class Reference extends JFrame implements KeyListener{
 		new Reference();
 	}
 
-	@Override
-	public void keyTyped(KeyEvent e) {
 	
-	}
-
-	@Override
-	public void keyPressed(KeyEvent e) {
-		switch(e.getKeyCode()) {
-		case KeyEvent.VK_UP: // UP
-			break;
-			
-		case KeyEvent.VK_DOWN:
-			moveShape(eleNew, downDirection);
-			break;
-		
-		case KeyEvent.VK_LEFT:
-			moveShape(eleNew, leftDirection);
-			break;
-			
-		case KeyEvent.VK_RIGHT:
-			moveShape(eleNew, rightDirection);
-			break;
-			
-		case KeyEvent.VK_SPACE:
-			moveShape(eleNew, rotationDirection);
-			break;
-		}
-		
-	repaint();
-	}
-
-	@Override
-	public void keyReleased(KeyEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
 	
 	public Shape makeShape(int shapeNumber) {
 		Shape randomShape = new Shape(shapeNumber);
@@ -253,6 +213,7 @@ public class Reference extends JFrame implements KeyListener{
 				}
 			}
 			
+			//경계는 넘지 않았지만 다른 도형에 닿은 경우, 이 도형은 끝나고 새로운 도형이 필요하다.
 			if(!flag && checkShapetoShape(updateElement)) { // 경계체크
 				flag = true;
 				needShape = true;
@@ -262,7 +223,8 @@ public class Reference extends JFrame implements KeyListener{
 				return updateElement; // 이동이 가능하면 update배열을 리턴
 			}
 			else {
-				addShapeToRecord(currentElement);
+				// 왼쪽, 오른쪽은 움직이는것만 안되는것이고, recordArray에 기록하면 안됨.
+				//addShapeToRecord(currentElement);
 				return currentElement; // 이동이 불가능하면 기존 배열을 리턴
 			}
 		
@@ -280,6 +242,7 @@ public class Reference extends JFrame implements KeyListener{
 				}
 			}
 			
+			//경계는 넘지 않았지만 다른 도형에 닿은 경우, 이 도형은 끝나고 새로운 도형이 필요하다.
 			if(!flag && checkShapetoShape(updateElement)) { // 경계체크
 				flag = true;
 				needShape = true;
@@ -289,7 +252,8 @@ public class Reference extends JFrame implements KeyListener{
 				return updateElement; // 이동이 가능하면 update배열을 리턴
 			}
 			else {
-				addShapeToRecord(currentElement);
+				//왼쪽, 오른쪽은 움직이는것만 안되는것이고, recordArray에 기록하면 안됨.
+				//addShapeToRecord(currentElement);
 				return currentElement; // 이동이 불가능하면 기존 배열을 리턴
 			}
 			
@@ -379,6 +343,46 @@ public class Reference extends JFrame implements KeyListener{
 		}
 		return checkFlag;
 	}
-}
+	
+	class MyKeyListener extends KeyAdapter{
+		@Override
+		public void keyTyped(KeyEvent e) {
+		
+		}
 
+		@Override
+		public void keyPressed(KeyEvent e) {
+			switch(e.getKeyCode()) {
+			case KeyEvent.VK_UP: // UP
+				break;
+				
+			case KeyEvent.VK_DOWN:
+				System.out.println(e.getKeyCode());
+				moveShape(eleNew, downDirection);
+				break;
+			
+			case KeyEvent.VK_LEFT:
+				System.out.println(e.getKeyCode());
+				moveShape(eleNew, leftDirection);
+				break;
+				
+			case KeyEvent.VK_RIGHT:
+				System.out.println(e.getKeyCode());
+				moveShape(eleNew, rightDirection);
+				break;
+				
+			case KeyEvent.VK_SPACE:
+				System.out.println(e.getKeyCode());
+				moveShape(eleNew, rotationDirection);
+				break;
+			}
+		}
+
+		@Override
+		public void keyReleased(KeyEvent e) {
+			// TODO Auto-generated method stub
+		}
+		
+	}
+}
 	

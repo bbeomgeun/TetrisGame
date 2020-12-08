@@ -23,7 +23,7 @@ class Element{
 
 class Shape{
 	Element current[] = new Element[4];
-	int height = 0; // row
+	int height = 1; // row
 	int width = Reference.formWidth/2; // column
 	// x, y는 항상 도형의 좌측 최상단
 	
@@ -91,7 +91,7 @@ public class Reference extends JFrame implements KeyListener{
 	static int rightDirection = 0;
 	static int leftDirection = 1;
 	static int downDirection = 2;
-	static int rotation = 77;
+	static int rotationDirection = 3;
 	
 	static boolean needShape = true;
 	
@@ -164,6 +164,7 @@ public class Reference extends JFrame implements KeyListener{
 							jb.setBackground(colorBox[shapeNumber]);
 						}
 						eleNew = moveShape(eleNew, downDirection);
+						eleNew = moveShape(eleNew, rotationDirection);
 						
 						Thread.sleep(500);
 					}
@@ -204,6 +205,7 @@ public class Reference extends JFrame implements KeyListener{
 			break;
 			
 		case KeyEvent.VK_SPACE:
+			moveShape(eleNew, rotationDirection);
 			break;
 		}
 		
@@ -250,10 +252,17 @@ public class Reference extends JFrame implements KeyListener{
 					break;
 				}
 			}
+			
+			if(!flag && checkShapetoShape(updateElement)) { // 경계체크
+				flag = true;
+				needShape = true;
+			}
+			
 			if(flag == false) {
 				return updateElement; // 이동이 가능하면 update배열을 리턴
 			}
 			else {
+				addShapeToRecord(currentElement);
 				return currentElement; // 이동이 불가능하면 기존 배열을 리턴
 			}
 		
@@ -270,10 +279,17 @@ public class Reference extends JFrame implements KeyListener{
 					break;
 				}
 			}
+			
+			if(!flag && checkShapetoShape(updateElement)) { // 경계체크
+				flag = true;
+				needShape = true;
+			}
+			
 			if(flag == false) {
 				return updateElement; // 이동이 가능하면 update배열을 리턴
 			}
 			else {
+				addShapeToRecord(currentElement);
 				return currentElement; // 이동이 불가능하면 기존 배열을 리턴
 			}
 			
@@ -304,7 +320,39 @@ public class Reference extends JFrame implements KeyListener{
 				addShapeToRecord(currentElement);
 				return currentElement; // 이동이 불가능하면 기존 배열을 리턴
 			}
-		}
+			
+		case 3: // rotation
+			int standardX = currentElement[0].centerHeight;
+			int standardY = currentElement[0].centerWidth;
+			for(int i = 0 ; i < 4 ; i++) { // 3번만 회전
+				int tempHeight = standardX - currentElement[i].centerHeight; 
+				int tempWidth = standardY - currentElement[i].centerWidth;
+				// return용 배열 복사해두기
+				updateElement[i].centerHeight = standardX + tempWidth; // x = y
+				updateElement[i].centerWidth = standardY - tempHeight; // y = -x
+	
+				//updateElement[i].centerWidth > formWidth - 1 ||  || updateElement[i].centerWidth < 0
+				if(updateElement[i].centerHeight > formHeight - 1) { // 회전이동이므로 모든 조건
+					flag = true; // 충돌
+					break;
+				}
+			}
+			
+			if(!flag && checkShapetoShape(updateElement)) { // 경계체크
+				flag = true;
+				needShape = true;
+			}
+			
+			if(flag == false) {
+				return updateElement; // 이동이 가능하면 update배열을 리턴
+			}
+			else {
+				addShapeToRecord(currentElement);
+				return currentElement; // 이동이 불가능하면 기존 배열을 리턴
+			}
+			
+		} //switch 종료
+		
 		return updateElement;
 	}
 	

@@ -23,7 +23,7 @@ class Element{
 class Shape{
 	Element current[] = new Element[4];
 	int height = 1; // row
-	int width = Reference.formWidth/2; // column
+	int width = MainTetris.formWidth/2; // column
 	// x, y는 항상 도형의 좌측 최상단
 	
 	Shape(int shapeNum){
@@ -78,7 +78,7 @@ class Shape{
 	}
 }
 
-public class Reference extends JFrame{
+public class MainTetris extends JFrame{
 	// 1. GUI 화면구성
 	// 2. GUI 메뉴 구성
 	// 3. Thread
@@ -107,7 +107,7 @@ public class Reference extends JFrame{
 	Element[] eleNew; // randomFigure의 리턴값을 받을 Element 배열
 	Color colorBox[] = {Color.red, Color.blue, Color.yellow, Color.gray, Color.pink, Color.green, Color.orange};
 	
-	public Reference() {
+	public MainTetris() {
 		JMenuBar menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
 		
@@ -173,7 +173,7 @@ public class Reference extends JFrame{
 				}
 			}
 			
-			public synchronized void move() {
+			public void move() {
 					if(isLeft) {
 						eleNew = moveShape(eleNew, leftDirection);
 						isLeft = false;
@@ -198,7 +198,7 @@ public class Reference extends JFrame{
 		}
 
 	public static void main(String[] args) {
-		new Reference();
+		new MainTetris();
 	}
 
 	
@@ -388,58 +388,45 @@ public class Reference extends JFrame{
 			case KeyEvent.VK_DOWN:
 				System.out.println("pressed" + e.getKeyCode());
 				isDown = true;
-				//moveShape(eleNew, downDirection);
 				break;
 			
 			case KeyEvent.VK_LEFT:
 				System.out.println("pressed" + e.getKeyCode());
 				isLeft = true;
-				//moveShape(eleNew, leftDirection);
 				break;
 				
 			case KeyEvent.VK_RIGHT:
 				System.out.println("pressed" + e.getKeyCode());
 				isRight = true;
-				//moveShape(eleNew, rightDirection);
 				break;
 				
 			case KeyEvent.VK_SPACE:
 				System.out.println("pressed" + e.getKeyCode());
 				isRotation = true;
-				//moveShape(eleNew, rotationDirection);
 				break;
 			}
 		}
 
 		@Override
 		public void keyReleased(KeyEvent e) {
-			// TODO Auto-generated method stub
 			switch(e.getKeyCode()) {
 			case KeyEvent.VK_UP: // UP
 				break;
 				
 			case KeyEvent.VK_DOWN:
 				System.out.println("released" + e.getKeyCode());
-				//isDown = false;
-				//moveShape(eleNew, downDirection);
 				break;
 			
 			case KeyEvent.VK_LEFT:
 				System.out.println("released" + e.getKeyCode());
-				//isLeft = false;
-				//moveShape(eleNew, leftDirection);
 				break;
 				
 			case KeyEvent.VK_RIGHT:
 				System.out.println("released" + e.getKeyCode());
-				//isRight = false;
-				//moveShape(eleNew, rightDirection);
 				break;
 				
 			case KeyEvent.VK_SPACE:
 				System.out.println("released" + e.getKeyCode());
-				//isRotation = false;
-				//moveShape(eleNew, rotationDirection);
 				break;
 			}
 		}

@@ -92,6 +92,11 @@ public class Reference extends JFrame{
 	static int downDirection = 2;
 	static int rotationDirection = 3;
 	
+	static boolean isLeft = false;
+	static boolean isRight = false;
+	static boolean isDown = false;
+	static boolean isRotation = false;
+	
 	static boolean needShape = true;
 	
 	int recordArray[][]; // 기록용 배열
@@ -158,19 +163,39 @@ public class Reference extends JFrame{
 							JButton jb = b[eleNew[i].centerHeight][eleNew[i].centerWidth];
 							jb.setBackground(colorBox[shapeNumber]);
 						}
-						eleNew = moveShape(eleNew, downDirection);
-						eleNew = moveShape(eleNew, leftDirection);
+						move();
+						//eleNew = moveShape(eleNew, leftDirection);
 						
 						Thread.sleep(500);
 					}
 				} catch (Exception e) {
 					System.out.println(e);
 				}
-				
 			}
-		}).run();
-	}
-
+			
+			public synchronized void move() {
+					if(isLeft) {
+						eleNew = moveShape(eleNew, leftDirection);
+						isLeft = false;
+					}
+					else if(isRight) {
+						eleNew = moveShape(eleNew, rightDirection);
+						isRight = false;
+						}
+					else if(isDown) {
+						eleNew = moveShape(eleNew, downDirection);
+						isDown = false;
+					}
+					else if(isRotation) {
+						eleNew = moveShape(eleNew, rotationDirection);
+						isRotation = false;
+					}
+					else
+						eleNew = moveShape(eleNew, downDirection);
+			}
+			
+		}).run();	
+		}
 
 	public static void main(String[] args) {
 		new Reference();
@@ -200,6 +225,7 @@ public class Reference extends JFrame{
 		}
 		switch (direction) {
 		case 0: // right
+			System.out.println("오른쪽");
 			for(int i = 0 ; i < 4 ; i++) {
 				int tempHeight = currentElement[i].centerHeight; // 높이는 그대로
 				int tempWidth = currentElement[i].centerWidth + 1; // 오른쪽 이동이므로 가로좌표 + 1
@@ -229,6 +255,7 @@ public class Reference extends JFrame{
 			}
 		
 		case 1: // left
+			System.out.println("왼쪽");
 			for(int i = 0 ; i < 4 ; i++) {
 				int tempHeight = currentElement[i].centerHeight;
 				int tempWidth = currentElement[i].centerWidth - 1; // 왼쪽 이동이므로 가로좌표 - 1
@@ -258,6 +285,7 @@ public class Reference extends JFrame{
 			}
 			
 		case 2: // down
+			System.out.println("아래");
 			for(int i = 0 ; i < 4 ; i++) {
 				int tempHeight = currentElement[i].centerHeight + 1;  // 아래 이동이므로 세로좌표 + 1
 				int tempWidth = currentElement[i].centerWidth;
@@ -286,6 +314,7 @@ public class Reference extends JFrame{
 			}
 			
 		case 3: // rotation
+			System.out.println("회전");
 			int standardX = currentElement[0].centerHeight;
 			int standardY = currentElement[0].centerWidth;
 			for(int i = 0 ; i < 4 ; i++) { // 3번만 회전
@@ -357,23 +386,27 @@ public class Reference extends JFrame{
 				break;
 				
 			case KeyEvent.VK_DOWN:
-				System.out.println(e.getKeyCode());
-				moveShape(eleNew, downDirection);
+				System.out.println("pressed" + e.getKeyCode());
+				isDown = true;
+				//moveShape(eleNew, downDirection);
 				break;
 			
 			case KeyEvent.VK_LEFT:
-				System.out.println(e.getKeyCode());
-				moveShape(eleNew, leftDirection);
+				System.out.println("pressed" + e.getKeyCode());
+				isLeft = true;
+				//moveShape(eleNew, leftDirection);
 				break;
 				
 			case KeyEvent.VK_RIGHT:
-				System.out.println(e.getKeyCode());
-				moveShape(eleNew, rightDirection);
+				System.out.println("pressed" + e.getKeyCode());
+				isRight = true;
+				//moveShape(eleNew, rightDirection);
 				break;
 				
 			case KeyEvent.VK_SPACE:
-				System.out.println(e.getKeyCode());
-				moveShape(eleNew, rotationDirection);
+				System.out.println("pressed" + e.getKeyCode());
+				isRotation = true;
+				//moveShape(eleNew, rotationDirection);
 				break;
 			}
 		}
@@ -381,8 +414,35 @@ public class Reference extends JFrame{
 		@Override
 		public void keyReleased(KeyEvent e) {
 			// TODO Auto-generated method stub
+			switch(e.getKeyCode()) {
+			case KeyEvent.VK_UP: // UP
+				break;
+				
+			case KeyEvent.VK_DOWN:
+				System.out.println("released" + e.getKeyCode());
+				//isDown = false;
+				//moveShape(eleNew, downDirection);
+				break;
+			
+			case KeyEvent.VK_LEFT:
+				System.out.println("released" + e.getKeyCode());
+				//isLeft = false;
+				//moveShape(eleNew, leftDirection);
+				break;
+				
+			case KeyEvent.VK_RIGHT:
+				System.out.println("released" + e.getKeyCode());
+				//isRight = false;
+				//moveShape(eleNew, rightDirection);
+				break;
+				
+			case KeyEvent.VK_SPACE:
+				System.out.println("released" + e.getKeyCode());
+				//isRotation = false;
+				//moveShape(eleNew, rotationDirection);
+				break;
+			}
 		}
 		
 	}
 }
-	

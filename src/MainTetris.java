@@ -99,6 +99,10 @@ public class MainTetris extends JFrame{
 	
 	static boolean needShape = true;
 	
+	static boolean fullRow = false;
+	
+	int gameScore = 0;
+	
 	int recordArray[][]; // 기록용 배열
 	
 	JButton b[][];
@@ -141,14 +145,33 @@ public class MainTetris extends JFrame{
 				try {
 					makeRecordArray();
 					while(true) {
-						if(needShape) {
+						if(needShape) { // 블럭이 필요한 경우 랜덤 생성
 							shapeNumber = (int)Math.floor(Math.random()*7);// 0~6 
 							randomFigure = makeShape(shapeNumber);
 							eleNew = randomFigure.transferArray();
 							needShape = false;
 						}
+						// 한줄 지우기 코드
+						for(int row = 0 ; row < formHeight ; row++) {
+							fullRow = true;
+							for(int col = 0 ; col < formWidth ; col++) {
+								if(recordArray[row][col] == -1) {
+									fullRow = false;
+								}	
+							}
+							if(fullRow) { // 해당 row가 모두 0이 아닐 경우
+								for(int col = 0 ; col <formWidth ; col++) {
+									recordArray[row][col] = -1; // 해당 row 값 0으로 만들기
+									gameScore += 10; // 점수 더해주기
+								}
+								for(int tempRow = row ; tempRow >0 ; tempRow--) { // 한 줄씩 밑으로 내려주기
+									recordArray[tempRow] = recordArray[tempRow-1];
+								}
+							}
+						}
 						
-						// 임시 배경 reset 코드
+						
+						// 배경 reset 코드
 						for(int row = 0 ; row < formHeight ; row++) {
 							for(int col = 0 ; col < formWidth ; col++) {
 								if(recordArray[row][col] == -1)
@@ -182,7 +205,8 @@ public class MainTetris extends JFrame{
 						eleNew = moveShape(eleNew, rightDirection);
 						isRight = false;
 						}
-					else if(isDown) {
+					else if(isDown) { // 두 칸씩
+						eleNew = moveShape(eleNew, downDirection);
 						eleNew = moveShape(eleNew, downDirection);
 						isDown = false;
 					}

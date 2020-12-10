@@ -1,5 +1,8 @@
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
@@ -7,6 +10,8 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
 
 class Element{
 	//중심점 x,y를 잡고 이것을 중심으로 +-으로 도형 표현할 것이다.
@@ -78,7 +83,7 @@ class Shape{
 	}
 }
 
-public class MainTetris extends JFrame{
+public class MainTetris extends JFrame implements Runnable{
 	// 1. GUI 화면구성
 	// 2. GUI 메뉴 구성
 	// 3. Thread
@@ -106,25 +111,73 @@ public class MainTetris extends JFrame{
 	int recordArray[][]; // 기록용 배열
 	
 	JButton b[][];
+	JButton preview[][];
+	
 	int shapeNumber; // random함수로 0~6까지 나와서 makeShape함수의 변수로 사용
 	Shape randomFigure; // makeShape의 결과물(Element 배열을 가지고 있다)
 	Element[] eleNew; // randomFigure의 리턴값을 받을 Element 배열
 	Color colorBox[] = {Color.red, Color.blue, Color.yellow, Color.gray, Color.pink, Color.green, Color.orange};
+
+	JPanel main;
+	JPanel sub;
+	
+	Thread tetris;
+	
+	JMenuBar menuBar;
+	JMenu menu_game, menu_file, menu_guide;
+	JMenuItem gameStart, gameExit, gameSave, gameLoad, gameTip;
 	
 	public MainTetris() {
-		JMenuBar menuBar = new JMenuBar();
+		menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
+		main = new JPanel();
+		sub = new JPanel();
 		
-		JMenu menu_1 = new JMenu("파일저장");
-		menuBar.add(menu_1);
-		JMenu menu_2 = new JMenu("파일 불러오기");
-		menuBar.add(menu_2);
-		JMenu menu_3 = new JMenu("게임 종료");
-		menuBar.add(menu_3);
+		menu_game = new JMenu("게임");
+		menuBar.add(menu_game);
 		
-
-		setLayout(new GridLayout(formHeight, formWidth));
-		setSize(500, 1000);
+		menu_file = new JMenu("파일");
+		menuBar.add(menu_file);
+		
+		menu_guide = new JMenu("도움말");
+		menuBar.add(menu_guide);
+		
+		gameStart = new JMenuItem("게임 시작하기");
+		gameStart.addActionListener(myActionListener);
+		
+		gameExit = new JMenuItem("게임 종료하기");
+		gameExit.addActionListener(myActionListener);
+		
+		gameSave = new JMenuItem("게임 저장하기");
+		gameSave.addActionListener(myActionListener);
+		
+		gameLoad = new JMenuItem("게임 불러오기");
+		gameLoad.addActionListener(myActionListener);
+		
+		gameTip = new JMenuItem("게임 도움말");
+		gameTip.addActionListener(myActionListener);
+		
+		menu_game.add(gameStart);
+		menu_game.add(gameExit);
+		
+		menu_file.add(gameSave);
+		menu_file.add(gameLoad);
+		
+		menu_guide.add(gameTip);
+		
+		setSize(600, 1000); // JFrame 사이즈
+		
+		// 테트리스 판 세팅
+		main.setLayout(new GridLayout(formHeight, formWidth));
+		main.setSize(550, 1000); 
+		
+		// 미리보기 세팅
+		//sub.setLayout(new GridLayout(4,4));
+		sub.setSize(100, 100);
+		
+		getContentPane().add(main, BorderLayout.CENTER);
+		getContentPane().add(sub);
+		
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // 정상 종료
 		
 		b = new JButton[formHeight][formWidth];
@@ -132,100 +185,110 @@ public class MainTetris extends JFrame{
 		for(int row = 0 ; row < formHeight ; row++) {
 			for(int col = 0 ; col < formWidth ; col++) {
 				b[row][col] = new JButton();
-				add(b[row][col]);
+				main.add(b[row][col]);
 				JButton bj = b[row][col];
 				bj.addKeyListener(new MyKeyListener());
 				}
 			}
-		setVisible(true);
 		
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				try {
-					makeRecordArray();
-					while(true) {
-						if(needShape) { // 블럭이 필요한 경우 랜덤 생성
-							shapeNumber = (int)Math.floor(Math.random()*7);// 0~6 
-							randomFigure = makeShape(shapeNumber);
-							eleNew = randomFigure.transferArray();
-							needShape = false;
-						}
-						// 한줄 지우기 코드
-						for(int row = 0 ; row < formHeight ; row++) {
-							fullRow = true;
-							for(int col = 0 ; col < formWidth ; col++) {
-								if(recordArray[row][col] == -1) {
-									fullRow = false;
-								}	
-							}
-							if(fullRow) { // 해당 row가 모두 0이 아닐 경우
-								for(int col = 0 ; col <formWidth ; col++) {
-									recordArray[row][col] = -1; // 해당 row 값 0으로 만들기
-									gameScore += 10; // 점수 더해주기
-								}
-								for(int tempRow = row ; tempRow >0 ; tempRow--) { // 한 줄씩 밑으로 내려주기
-									recordArray[tempRow] = recordArray[tempRow-1];
-								}
-							}
-						}
-						
-						
-						// 배경 reset 코드
-						for(int row = 0 ; row < formHeight ; row++) {
-							for(int col = 0 ; col < formWidth ; col++) {
-								if(recordArray[row][col] == -1)
-									b[row][col].setBackground(Color.white);
-								else
-									b[row][col].setBackground(colorBox[recordArray[row][col]]);
-							}
-						}
-						
-						// 그리기 코드
-						for(int i = 0 ; i < 4 ; i++) {
-							JButton jb = b[eleNew[i].centerHeight][eleNew[i].centerWidth];
-							jb.setBackground(colorBox[shapeNumber]);
-						}
-						move();
-						//eleNew = moveShape(eleNew, leftDirection);
-						
-						Thread.sleep(500);
-					}
-				} catch (Exception e) {
-					System.out.println(e);
-				}
-			}
-			
-			public void move() {
-					if(isLeft) {
-						eleNew = moveShape(eleNew, leftDirection);
-						isLeft = false;
-					}
-					else if(isRight) {
-						eleNew = moveShape(eleNew, rightDirection);
-						isRight = false;
-						}
-					else if(isDown) { // 두 칸씩
-						eleNew = moveShape(eleNew, downDirection);
-						eleNew = moveShape(eleNew, downDirection);
-						isDown = false;
-					}
-					else if(isRotation) {
-						eleNew = moveShape(eleNew, rotationDirection);
-						isRotation = false;
-					}
-					else
-						eleNew = moveShape(eleNew, downDirection);
-			}
-			
-		}).run();	
+//		preview = new JButton[4][4];
+//		
+//		for(int r = 0 ; r < 4 ; r++) {
+//			for(int c = 0 ; c < 4 ; c++) {
+//				preview[r][c] = new JButton();
+//				sub.add(preview[r][c]);
+//			}
+//		}
+		
+		setVisible(true);
 		}
 
 	public static void main(String[] args) {
 		new MainTetris();
 	}
-
 	
+	public void start() {
+		tetris = new Thread(this);
+		tetris.start();
+	}
+
+	public void run() {
+		try {
+			makeRecordArray();
+			while(true) {
+				if(needShape) { // 블럭이 필요한 경우 랜덤 생성
+					shapeNumber = (int)Math.floor(Math.random()*7);// 0~6 
+					randomFigure = makeShape(shapeNumber);
+					eleNew = randomFigure.transferArray();
+					needShape = false;
+				}
+				// 한줄 지우기 코드
+				for(int row = 0 ; row < formHeight ; row++) {
+					fullRow = true;
+					for(int col = 0 ; col < formWidth ; col++) {
+						if(recordArray[row][col] == -1) {
+							fullRow = false;
+						}	
+					}
+					if(fullRow) { // 해당 row가 모두 0이 아닐 경우
+						for(int col = 0 ; col <formWidth ; col++) {
+							recordArray[row][col] = -1; // 해당 row 값 0으로 만들기
+							gameScore += 10; // 점수 더해주기
+						}
+						for(int tempRow = row ; tempRow >0 ; tempRow--) { // 한 줄씩 밑으로 내려주기
+							recordArray[tempRow] = recordArray[tempRow-1];
+						}
+					}
+				}
+				
+				System.out.println(gameScore);
+				
+				// 배경 reset 코드
+				for(int row = 0 ; row < formHeight ; row++) {
+					for(int col = 0 ; col < formWidth ; col++) {
+						if(recordArray[row][col] == -1)
+							b[row][col].setBackground(Color.white);
+						else
+							b[row][col].setBackground(colorBox[recordArray[row][col]]);
+					}
+				}
+				
+				// 그리기 코드
+				for(int i = 0 ; i < 4 ; i++) {
+					JButton jb = b[eleNew[i].centerHeight][eleNew[i].centerWidth];
+					jb.setBackground(colorBox[shapeNumber]);
+				}
+				move();
+				//eleNew = moveShape(eleNew, leftDirection);
+				
+				Thread.sleep(500);
+			}
+		} catch (Exception e) {
+			System.out.println(e);
+		}
+	}
+		
+		public void move() {
+				if(isLeft) {
+					eleNew = moveShape(eleNew, leftDirection);
+					isLeft = false;
+				}
+				else if(isRight) {
+					eleNew = moveShape(eleNew, rightDirection);
+					isRight = false;
+					}
+				else if(isDown) { // 두 칸씩
+					eleNew = moveShape(eleNew, downDirection);
+					eleNew = moveShape(eleNew, downDirection);
+					isDown = false;
+				}
+				else if(isRotation) {
+					eleNew = moveShape(eleNew, rotationDirection);
+					isRotation = false;
+				}
+				else
+					eleNew = moveShape(eleNew, downDirection);
+		}
 	
 	public Shape makeShape(int shapeNumber) {
 		Shape randomShape = new Shape(shapeNumber);
@@ -454,6 +517,28 @@ public class MainTetris extends JFrame{
 				break;
 			}
 		}
-		
 	}
+	
+	ActionListener myActionListener = new ActionListener() {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			if(e.getSource() == gameStart) {
+				start();
+			}
+			else if(e.getSource() == gameExit) {
+				//게임 종료 코드
+			}
+			else if(e.getSource() == gameSave) {
+				// 게임 저장 - 쓰레드 종료 후 파일 입력으로 recordArray 저장하기
+			}
+			else if(e.getSource() == gameLoad) {
+				// 게임 불러오기 - 파일 출력으로 recordArray에 복사하기 -> 불러와서 그리기까지 해야한다.
+			}
+			else if(e.getSource() == gameTip) {
+				 // 그냥 팝업으로 텍스트 띄워주기
+			}
+		}
+		
+	};
 }

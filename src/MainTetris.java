@@ -1,10 +1,14 @@
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -106,6 +110,8 @@ public class MainTetris extends JFrame implements Runnable{
 	
 	static boolean fullRow = false;
 	
+	static boolean gameEnd = false;
+	
 	int gameScore = 0;
 	
 	int recordArray[][]; // 기록용 배열
@@ -125,7 +131,7 @@ public class MainTetris extends JFrame implements Runnable{
 	
 	JMenuBar menuBar;
 	JMenu menu_game, menu_file, menu_guide;
-	JMenuItem gameStart, gameExit, gameSave, gameLoad, gameTip;
+	JMenuItem gameStart, gameExit, programExit, gameSave, gameLoad, gameTip;
 	
 	public MainTetris() {
 		menuBar = new JMenuBar();
@@ -148,6 +154,9 @@ public class MainTetris extends JFrame implements Runnable{
 		gameExit = new JMenuItem("게임 종료하기");
 		gameExit.addActionListener(myActionListener);
 		
+		programExit = new JMenuItem("프로그램 종료하기");
+		programExit.addActionListener(myActionListener);
+		
 		gameSave = new JMenuItem("게임 저장하기");
 		gameSave.addActionListener(myActionListener);
 		
@@ -159,6 +168,7 @@ public class MainTetris extends JFrame implements Runnable{
 		
 		menu_game.add(gameStart);
 		menu_game.add(gameExit);
+		menu_game.add(programExit);
 		
 		menu_file.add(gameSave);
 		menu_file.add(gameLoad);
@@ -173,10 +183,10 @@ public class MainTetris extends JFrame implements Runnable{
 		
 		// 미리보기 세팅
 		//sub.setLayout(new GridLayout(4,4));
-		sub.setSize(100, 100);
+		//sub.setSize(100, 100);
 		
-		getContentPane().add(main, BorderLayout.CENTER);
-		getContentPane().add(sub);
+		getContentPane().add(main);
+//		getContentPane().add(sub);
 		
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // 정상 종료
 		
@@ -190,6 +200,8 @@ public class MainTetris extends JFrame implements Runnable{
 				bj.addKeyListener(new MyKeyListener());
 				}
 			}
+		makeRecordArray();
+		drawBackGround();
 		
 //		preview = new JButton[4][4];
 //		
@@ -214,52 +226,31 @@ public class MainTetris extends JFrame implements Runnable{
 
 	public void run() {
 		try {
-			makeRecordArray();
-			while(true) {
+			while(!gameEnd) {
 				if(needShape) { // 블럭이 필요한 경우 랜덤 생성
 					shapeNumber = (int)Math.floor(Math.random()*7);// 0~6 
 					randomFigure = makeShape(shapeNumber);
 					eleNew = randomFigure.transferArray();
 					needShape = false;
+					if(checkShapetoShape(eleNew)) {
+						drawCurrentShape(); // 도형 겹치는거 보여주고 종료
+						gameEnd = true;
+						break;
+					}
 				}
 				// 한줄 지우기 코드
-				for(int row = 0 ; row < formHeight ; row++) {
-					fullRow = true;
-					for(int col = 0 ; col < formWidth ; col++) {
-						if(recordArray[row][col] == -1) {
-							fullRow = false;
-						}	
-					}
-					if(fullRow) { // 해당 row가 모두 0이 아닐 경우
-						for(int col = 0 ; col <formWidth ; col++) {
-							recordArray[row][col] = -1; // 해당 row 값 0으로 만들기
-							gameScore += 10; // 점수 더해주기
-						}
-						for(int tempRow = row ; tempRow >0 ; tempRow--) { // 한 줄씩 밑으로 내려주기
-							recordArray[tempRow] = recordArray[tempRow-1];
-						}
-					}
-				}
+				eraseFullRow();
 				
 				System.out.println(gameScore);
 				
 				// 배경 reset 코드
-				for(int row = 0 ; row < formHeight ; row++) {
-					for(int col = 0 ; col < formWidth ; col++) {
-						if(recordArray[row][col] == -1)
-							b[row][col].setBackground(Color.white);
-						else
-							b[row][col].setBackground(colorBox[recordArray[row][col]]);
-					}
-				}
+				drawBackGround();
 				
 				// 그리기 코드
-				for(int i = 0 ; i < 4 ; i++) {
-					JButton jb = b[eleNew[i].centerHeight][eleNew[i].centerWidth];
-					jb.setBackground(colorBox[shapeNumber]);
-				}
+				drawCurrentShape();
+				
+				// 방향에 맞춰서 도형 움직이는 코드 / default는 downDirection
 				move();
-				//eleNew = moveShape(eleNew, leftDirection);
 				
 				Thread.sleep(500);
 			}
@@ -267,27 +258,70 @@ public class MainTetris extends JFrame implements Runnable{
 			System.out.println(e);
 		}
 	}
-		
-		public void move() {
-				if(isLeft) {
-					eleNew = moveShape(eleNew, leftDirection);
-					isLeft = false;
+	
+	public void eraseFullRow() {
+		for(int row = 0 ; row < formHeight ; row++) {
+			fullRow = true;
+			for(int col = 0 ; col < formWidth ; col++) {
+				if(recordArray[row][col] == -1) {
+					fullRow = false;
+				}	
+			}
+			if(fullRow) { // 해당 row가 모두 0이 아닐 경우
+				for(int col = 0 ; col <formWidth ; col++) {
+					recordArray[row][col] = -1; // 해당 row 값 0으로 만들기
 				}
-				else if(isRight) {
-					eleNew = moveShape(eleNew, rightDirection);
-					isRight = false;
-					}
-				else if(isDown) { // 두 칸씩
-					eleNew = moveShape(eleNew, downDirection);
-					eleNew = moveShape(eleNew, downDirection);
-					isDown = false;
+				gameScore += 10; // 점수 더해주기
+				for(int tempRow = row ; tempRow >0 ; tempRow--) { // 한 줄씩 밑으로 내려주기
+					recordArray[tempRow] = recordArray[tempRow-1];
 				}
-				else if(isRotation) {
-					eleNew = moveShape(eleNew, rotationDirection);
-					isRotation = false;
-				}
+			}
+		}
+	}
+	
+	public void drawBackGround() {
+		for(int row = 2 ; row < formHeight ; row++) {
+			for(int col = 0 ; col < formWidth ; col++) {
+				if(recordArray[row][col] == -1)
+					b[row][col].setBackground(Color.white);
 				else
-					eleNew = moveShape(eleNew, downDirection);
+					b[row][col].setBackground(colorBox[recordArray[row][col]]);
+			}
+		}
+		for(int i = 0 ; i <= 1 ; i++) {
+			for(int j = 0 ; j < formWidth ; j++) {
+				b[i][j].setBackground(Color.black);
+			}
+		}
+	}
+	
+	public void drawCurrentShape() {
+		for(int i = 0 ; i < 4 ; i++) {
+			JButton jb = b[eleNew[i].centerHeight][eleNew[i].centerWidth];
+			jb.setBackground(colorBox[shapeNumber]);
+		}
+	}
+		
+	public void move() {
+			if(isLeft) {
+				eleNew = moveShape(eleNew, leftDirection);
+				isLeft = false;
+			}
+			else if(isRight) {
+				eleNew = moveShape(eleNew, rightDirection);
+				isRight = false;
+				}
+			else if(isDown) { // 두 칸씩
+				eleNew = moveShape(eleNew, downDirection);
+				eleNew = moveShape(eleNew, downDirection);
+				isDown = false;
+			}
+			else if(isRotation) {
+				eleNew = moveShape(eleNew, rotationDirection);
+				isRotation = false;
+			}
+			else
+				eleNew = moveShape(eleNew, downDirection);
 		}
 	
 	public Shape makeShape(int shapeNumber) {
@@ -444,6 +478,14 @@ public class MainTetris extends JFrame implements Runnable{
 			}
 		}
 	}
+	public void resetRecordArray() {
+		for(int i = 0 ; i < formHeight ; i++) {
+			for(int j = 0 ; j < formWidth ; j++) {
+				recordArray[i][j] = -1;
+			}
+		}
+	}
+	
 	public void addShapeToRecord(Element[] shape) { // 바닥에 닿았을시 array에 입력
 		for(int i = 0 ; i < 4 ; i++) {
 			recordArray[shape[i].centerHeight][shape[i].centerWidth] = shape[i].colorNum;
@@ -458,6 +500,46 @@ public class MainTetris extends JFrame implements Runnable{
 			}
 		}
 		return checkFlag;
+	}
+	
+	public void saveRecordArray() {
+		String output = "C:\\homework\\tetrisResult.txt"; // c\:homework 폴더
+		File file = new File(output);
+		try {
+			PrintWriter pw = new PrintWriter(file);
+			for(int i = 0 ; i < formHeight ; i++) {
+				for(int j = 0 ; j < formWidth ; j++) {
+					pw.print(recordArray[i][j]+ " ");
+				}
+				pw.println("");
+			}
+			pw.flush();
+			pw.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void loadRecordArray() {
+		String output = "C:\\homework\\tetrisResult.txt"; // c\:homework 폴더
+		File file = new File(output);
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(file));
+			String str;
+			for(int i = 0 ; i < formHeight ; i++) {
+				str = br.readLine();
+				String [] splitNum = str.split(" ");
+				for(int j = 0 ; j < formWidth ; j++) {	
+					if(str==null)
+						break;
+					recordArray[i][j] = Integer.parseInt(splitNum[j]);	
+				}
+				System.out.println("");
+			}	
+		}catch (IOException e) {
+		e.printStackTrace();
+		}
 	}
 	
 	class MyKeyListener extends KeyAdapter{
@@ -524,21 +606,35 @@ public class MainTetris extends JFrame implements Runnable{
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			if(e.getSource() == gameStart) {
+				needShape = true;
+				fullRow = false;
+				gameEnd = false;
 				start();
 			}
 			else if(e.getSource() == gameExit) {
-				//게임 종료 코드
+				gameEnd = true;
+				tetris = null; // thread에 null값을 넣어주기.
+				resetRecordArray();
+				drawBackGround();
+			}
+			else if(e.getSource() == programExit) { // 완전 창을 종료
+				setVisible(false);
+				dispose();
+				System.exit(0);
 			}
 			else if(e.getSource() == gameSave) {
-				// 게임 저장 - 쓰레드 종료 후 파일 입력으로 recordArray 저장하기
+				gameEnd = true; // 쓰레드 멈추고
+				saveRecordArray();
 			}
 			else if(e.getSource() == gameLoad) {
 				// 게임 불러오기 - 파일 출력으로 recordArray에 복사하기 -> 불러와서 그리기까지 해야한다.
+				gameEnd = true; // 쓰레드 멈추고
+				loadRecordArray(); // recordArray에 복사 완료
+				drawBackGround();
 			}
 			else if(e.getSource() == gameTip) {
 				 // 그냥 팝업으로 텍스트 띄워주기
 			}
 		}
-		
 	};
 }

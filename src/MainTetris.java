@@ -15,6 +15,7 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 class Element{
@@ -235,6 +236,9 @@ public class MainTetris extends JFrame implements Runnable{
 					if(checkShapetoShape(eleNew)) {
 						drawCurrentShape(); // 도형 겹치는거 보여주고 종료
 						gameEnd = true;
+						JOptionPane.showMessageDialog(null, "Game Over!", "테트리스", JOptionPane.ERROR_MESSAGE);
+						resetRecordArray();
+						drawBackGround();
 						break;
 					}
 				}

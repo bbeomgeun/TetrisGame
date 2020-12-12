@@ -637,7 +637,15 @@ public class MainTetris extends JFrame implements Runnable{
 				drawBackGround();
 			}
 			else if(e.getSource() == gameTip) {
-				 // 그냥 팝업으로 텍스트 띄워주기
+				JOptionPane.showMessageDialog(null, "테트리스 게임 도움말\n기본 조작키 : 왼쪽,오른쪽,아래 방향키 + 회전 : 스페이스바"
+						+ "\n**메뉴 설명**"
+						+ "\n - 게임 시작 : 새 테트리스가 시작됩니다"
+						+ "\n - 게임 종료 : 진행중인 테트리스가 종료됩니다"
+						+ "\n - 프로그램 종료 : 게임 창이 종료됩니다"
+						+ "\n - 게임 저장 : 진행중인 테트리스가 기록됩니다."
+						+ "\n - 게임 불러오기 : 저장했던 테트리스를 불러옵니다."
+						+ "\n ** 게임 저장 및 불러오기 이후 게임 시작을 다시 누르면 이어서 게임이 진행됩니다 **"
+						, "테트리스 도움말", JOptionPane.PLAIN_MESSAGE);
 			}
 		}
 	};

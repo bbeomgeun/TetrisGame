@@ -89,12 +89,6 @@ class Shape{
 }
 
 public class MainTetris extends JFrame implements Runnable{
-	// 1. GUI 화면구성
-	// 2. GUI 메뉴 구성
-	// 3. Thread
-	// 4. 이벤트 처리
-	// 5. 파일 입출력 -> 게임데이터 배열 저장
-	// 6. 순서도 작성
 	static int formHeight = 20;
 	static int formWidth = 10;
 	static int rightDirection = 0;
@@ -135,6 +129,7 @@ public class MainTetris extends JFrame implements Runnable{
 	JMenuItem gameStart, gameExit, programExit, gameSave, gameLoad, gameTip;
 	
 	public MainTetris() {
+		// 메뉴 구성
 		menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
 		main = new JPanel();
@@ -236,7 +231,8 @@ public class MainTetris extends JFrame implements Runnable{
 					if(checkShapetoShape(eleNew)) {
 						drawCurrentShape(); // 도형 겹치는거 보여주고 종료
 						gameEnd = true;
-						JOptionPane.showMessageDialog(null, "Game Over!", "테트리스", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(null, "Game Over!\n"
+								+ "블럭 생성 구간까지 벽돌이 쌓이면 종료 돼요.", "테트리스", JOptionPane.ERROR_MESSAGE);
 						resetRecordArray();
 						drawBackGround();
 						break;

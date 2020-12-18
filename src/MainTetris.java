@@ -17,6 +17,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import java.awt.BorderLayout;
 
 class Element{
 	//중심점 x,y를 잡고 이것을 중심으로 +-으로 도형 표현할 것이다.
@@ -445,8 +446,11 @@ public class MainTetris extends JFrame implements Runnable{
 				updateElement[i].centerHeight = standardX + tempWidth; // x = y
 				updateElement[i].centerWidth = standardY - tempHeight; // y = -x
 	
-				//updateElement[i].centerWidth > formWidth - 1 ||  || updateElement[i].centerWidth < 0
-				if(updateElement[i].centerHeight > formHeight - 1) { // 회전이동이므로 모든 조건
+//				updateElement[i].centerWidth > formWidth - 1 ||
+//				|| updateElement[i].centerWidth < 0) 
+				if(
+						updateElement[i].centerHeight > formHeight - 1)
+						{ // 회전이동이므로 모든 조건
 					flag = true; // 충돌
 					break;
 				}

@@ -376,7 +376,6 @@ public class MainTetris extends JFrame implements Runnable{
 		}
 		switch (direction) {
 		case 0: // right
-			System.out.println("오른쪽");
 			for(int i = 0 ; i < 4 ; i++) {
 				int tempHeight = currentElement[i].centerHeight; // 높이는 그대로
 				int tempWidth = currentElement[i].centerWidth + 1; // 오른쪽 이동이므로 가로좌표 + 1
@@ -406,7 +405,6 @@ public class MainTetris extends JFrame implements Runnable{
 			}
 		
 		case 1: // left
-			System.out.println("왼쪽");
 			for(int i = 0 ; i < 4 ; i++) {
 				int tempHeight = currentElement[i].centerHeight;
 				int tempWidth = currentElement[i].centerWidth - 1; // 왼쪽 이동이므로 가로좌표 - 1
@@ -436,7 +434,6 @@ public class MainTetris extends JFrame implements Runnable{
 			}
 			
 		case 2: // down
-			System.out.println("아래");
 			for(int i = 0 ; i < 4 ; i++) {
 				int tempHeight = currentElement[i].centerHeight + 1;  // 아래 이동이므로 세로좌표 + 1
 				int tempWidth = currentElement[i].centerWidth;
@@ -465,7 +462,8 @@ public class MainTetris extends JFrame implements Runnable{
 			}
 			
 		case 3: // rotation
-			System.out.println("회전");
+			if(currentElement[0].colorNum == 2) // 정사각형은 회전 X
+				return currentElement;
 			int standardX = currentElement[0].centerHeight;
 			int standardY = currentElement[0].centerWidth;
 			for(int i = 0 ; i < 4 ; i++) { // 3번만 회전
@@ -526,12 +524,12 @@ public class MainTetris extends JFrame implements Runnable{
 		}
 	}
 	
-	public void addShapeToRecord(Element[] shape) { // 바닥에 닿았을시 array에 입력
+	public void addShapeToRecord(Element[] shape) { // 바닥에 닿았을시 RecordArray에 입력
 		for(int i = 0 ; i < 4 ; i++) {
 			recordArray[shape[i].centerHeight][shape[i].centerWidth] = shape[i].colorNum;
 		}
 	}
-	public boolean checkShapetoShape(Element[] shape) {  // 나중에 여기에 경계값 check까지 넣어서 코드 단순화하기
+	public boolean checkShapetoShape(Element[] shape) { 
 		boolean checkFlag = false;
 		for(int i = 0 ; i < 4 ; i++) {
 			if( recordArray[shape[i].centerHeight][shape[i].centerWidth] != -1) {
@@ -553,6 +551,7 @@ public class MainTetris extends JFrame implements Runnable{
 				}
 				pw.println("");
 			}
+			pw.print(gameScore);
 			pw.flush();
 			pw.close();
 		} catch (IOException e) {
@@ -567,14 +566,22 @@ public class MainTetris extends JFrame implements Runnable{
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(file));
 			String str;
-			for(int i = 0 ; i < formHeight ; i++) {
-				str = br.readLine();
+			for(int i = 0 ; i <= formHeight ; i++) {
+				if(i == formHeight) {
+					str = br.readLine();
+					gameScore = Integer.parseInt(str);
+					return;
+				}
+				else {
+					str = br.readLine();
+				}
 				String [] splitNum = str.split(" ");
 				for(int j = 0 ; j < formWidth ; j++) {	
 					if(str==null)
 						break;
 					recordArray[i][j] = Integer.parseInt(splitNum[j]);	
 				}
+				
 				System.out.println("");
 			}	
 		}catch (IOException e) {
@@ -591,51 +598,23 @@ public class MainTetris extends JFrame implements Runnable{
 		@Override
 		public void keyPressed(KeyEvent e) {
 			switch(e.getKeyCode()) {
-			case KeyEvent.VK_UP: // UP
+			case KeyEvent.VK_UP:
 				break;
 				
 			case KeyEvent.VK_DOWN:
-				//System.out.println("pressed" + e.getKeyCode());
 				isDown = true;
 				break;
 			
 			case KeyEvent.VK_LEFT:
-				//System.out.println("pressed" + e.getKeyCode());
 				isLeft = true;
 				break;
 				
 			case KeyEvent.VK_RIGHT:
-				//System.out.println("pressed" + e.getKeyCode());
 				isRight = true;
 				break;
 				
 			case KeyEvent.VK_SPACE:
-				//System.out.println("pressed" + e.getKeyCode());
 				isRotation = true;
-				break;
-			}
-		}
-
-		@Override
-		public void keyReleased(KeyEvent e) {
-			switch(e.getKeyCode()) {
-			case KeyEvent.VK_UP: // UP
-				break;
-				
-			case KeyEvent.VK_DOWN:
-				//System.out.println("released" + e.getKeyCode());
-				break;
-			
-			case KeyEvent.VK_LEFT:
-				//System.out.println("released" + e.getKeyCode());
-				break;
-				
-			case KeyEvent.VK_RIGHT:
-				//System.out.println("released" + e.getKeyCode());
-				break;
-				
-			case KeyEvent.VK_SPACE:
-				//System.out.println("released" + e.getKeyCode());
 				break;
 			}
 		}
@@ -646,15 +625,21 @@ public class MainTetris extends JFrame implements Runnable{
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			String radio = e.getActionCommand();
+			
 			if(e.getSource() == gameStart) {
+				focusUnCheck();
 				needShape = true;
+				main.setFocusable(true);
 				start();
+				
 			}
 			else if(e.getSource() == gameExit) {
 				gameEnd = true;
 				tetris = null; // thread에 null값을 넣어주기.
 				resetRecordArray();
 				drawBackGround();
+				gameScore = 0;
+				textGameScore.setText("  Score : "+gameScore);
 			}
 			else if(e.getSource() == programExit) { // 완전 창을 종료
 				setVisible(false);
@@ -671,6 +656,7 @@ public class MainTetris extends JFrame implements Runnable{
 				gameEnd = true; // 쓰레드 멈추고
 				loadRecordArray(); // recordArray에 복사 완료
 				drawBackGround();
+				textGameScore.setText("  Score : "+gameScore);
 			}
 			else if(e.getSource() == gameTip) {
 				JOptionPane.showMessageDialog(null, "테트리스 게임 도움말\n기본 조작키 : 왼쪽,오른쪽,아래 방향키 + 회전 : 스페이스바"
@@ -681,16 +667,18 @@ public class MainTetris extends JFrame implements Runnable{
 						+ "\n - 게임 저장 : 진행중인 테트리스가 기록됩니다."
 						+ "\n - 게임 불러오기 : 저장했던 테트리스를 불러옵니다."
 						+ "\n ** 게임 저장 및 불러오기 이후 게임 시작을 다시 누르면 이어서 게임이 진행됩니다 **"
+						+ "\n - 게임 재시작 및 일시중지 : 현재 게임을 일시중지하고 다시 재시작합니다."
+						+ "\n - 난이도 : 블럭의 속도가 달라지며, 스코어도 난이도에 따라 부여됩니다."
 						, "테트리스 도움말", JOptionPane.PLAIN_MESSAGE);
 			}
 			else if(e.getSource() == btnGameReStart) {
 				needShape = false;
 				start();
-				autoClick();
+				focusUnCheck();
 			}
 			else if(e.getSource() == btnGamePause) {
 				gameEnd = true;
-				autoClick();
+				focusUnCheck();
 			}
 			else if(radio.equals(radioHighLevel.getText())) {
 				plusScore = 30;
@@ -707,13 +695,11 @@ public class MainTetris extends JFrame implements Runnable{
 		}
 	};
 	
-	void autoClick() {
-		try {
-			Robot robot = new Robot();
-			robot.mouseMove(300,500);
-			robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-		} catch (AWTException e) {
-			e.printStackTrace();
-		}
+	void focusUnCheck() {
+		btnGameReStart.setFocusable(false);
+		btnGamePause.setFocusable(false);
+		radioHighLevel.setFocusable(false);
+		radioNormalLevel.setFocusable(false);
+		radioLowLevel.setFocusable(false);
 	}
 }

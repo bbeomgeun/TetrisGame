@@ -13,6 +13,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -31,7 +32,7 @@ class Element{
 	Element(int x, int y, int color){
 		this.centerHeight = x;
 		this.centerWidth = y;
-		this.colorNum = color; // 지울까 고민중(현재 사용 X)
+		this.colorNum = color;
 	}
 }
 
@@ -112,12 +113,14 @@ public class MainTetris extends JFrame implements Runnable{
 	
 	static boolean gameEnd = false;
 	
+	 // 난이도 중 기본값
 	int gameScore = 0;
+	int plusScore = 10;
+	int threadSpeed = 600;
 	
 	int recordArray[][]; // 기록용 배열
 	
 	JButton b[][];
-	JButton preview[][];
 	
 	int shapeNumber; // random함수로 0~6까지 나와서 makeShape함수의 변수로 사용
 	Shape randomFigure; // makeShape의 결과물(Element 배열을 가지고 있다)
@@ -125,7 +128,6 @@ public class MainTetris extends JFrame implements Runnable{
 	Color colorBox[] = {Color.red, Color.blue, Color.yellow, Color.gray, Color.pink, Color.green, Color.orange};
 
 	JPanel main;
-	JPanel sub;
 	
 	Thread tetris;
 	
@@ -135,13 +137,13 @@ public class MainTetris extends JFrame implements Runnable{
 	JButton btnGameReStart, btnGamePause;
 	JLabel textGameScore, textLevelInfo;
 	JRadioButton radioHighLevel, radioNormalLevel, radioLowLevel;
+	ButtonGroup radioGroup = new ButtonGroup();
 	
 	public MainTetris() {
 		// 메뉴 구성
 		menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
 		main = new JPanel();
-		sub = new JPanel();
 		
 		menu_game = new JMenu("게임");
 		menuBar.add(menu_game);
@@ -182,8 +184,15 @@ public class MainTetris extends JFrame implements Runnable{
 		textLevelInfo = new JLabel("  난이도  ");
 		
 		radioHighLevel = new JRadioButton("상");
+		radioHighLevel.addActionListener(myActionListener);
 		radioNormalLevel = new JRadioButton("중");
+		radioNormalLevel.addActionListener(myActionListener);
+		radioNormalLevel.setSelected(true);
 		radioLowLevel = new JRadioButton("하");
+		radioLowLevel.addActionListener(myActionListener);
+		radioGroup.add(radioHighLevel);
+		radioGroup.add(radioNormalLevel);
+		radioGroup.add(radioLowLevel);
 		
 		menu_game.add(gameStart);
 		menu_game.add(gameExit);
@@ -234,6 +243,8 @@ public class MainTetris extends JFrame implements Runnable{
 	}
 	
 	public void start() {
+		fullRow = false;
+		gameEnd = false;
 		tetris = new Thread(this);
 		tetris.start();
 	}
@@ -269,7 +280,7 @@ public class MainTetris extends JFrame implements Runnable{
 				// 방향에 맞춰서 도형 움직이는 코드 / default는 downDirection
 				move();
 				
-				Thread.sleep(500);
+				Thread.sleep(threadSpeed);
 			}
 		} catch (Exception e) {
 			System.out.println(e);
@@ -288,7 +299,7 @@ public class MainTetris extends JFrame implements Runnable{
 				for(int col = 0 ; col <formWidth ; col++) {
 					recordArray[row][col] = -1; // 해당 row 값 0으로 만들기
 				}
-				gameScore += 10; // 점수 더해주기
+				gameScore += plusScore; // 점수 더해주기
 				textGameScore.setText("  Score : "+gameScore);
 				for(int tempRow = row ; tempRow >0 ; tempRow--) { // 한 줄씩 밑으로 내려주기
 					recordArray[tempRow] = recordArray[tempRow-1];
@@ -584,22 +595,22 @@ public class MainTetris extends JFrame implements Runnable{
 				break;
 				
 			case KeyEvent.VK_DOWN:
-				System.out.println("pressed" + e.getKeyCode());
+				//System.out.println("pressed" + e.getKeyCode());
 				isDown = true;
 				break;
 			
 			case KeyEvent.VK_LEFT:
-				System.out.println("pressed" + e.getKeyCode());
+				//System.out.println("pressed" + e.getKeyCode());
 				isLeft = true;
 				break;
 				
 			case KeyEvent.VK_RIGHT:
-				System.out.println("pressed" + e.getKeyCode());
+				//System.out.println("pressed" + e.getKeyCode());
 				isRight = true;
 				break;
 				
 			case KeyEvent.VK_SPACE:
-				System.out.println("pressed" + e.getKeyCode());
+				//System.out.println("pressed" + e.getKeyCode());
 				isRotation = true;
 				break;
 			}
@@ -612,19 +623,19 @@ public class MainTetris extends JFrame implements Runnable{
 				break;
 				
 			case KeyEvent.VK_DOWN:
-				System.out.println("released" + e.getKeyCode());
+				//System.out.println("released" + e.getKeyCode());
 				break;
 			
 			case KeyEvent.VK_LEFT:
-				System.out.println("released" + e.getKeyCode());
+				//System.out.println("released" + e.getKeyCode());
 				break;
 				
 			case KeyEvent.VK_RIGHT:
-				System.out.println("released" + e.getKeyCode());
+				//System.out.println("released" + e.getKeyCode());
 				break;
 				
 			case KeyEvent.VK_SPACE:
-				System.out.println("released" + e.getKeyCode());
+				//System.out.println("released" + e.getKeyCode());
 				break;
 			}
 		}
@@ -634,10 +645,9 @@ public class MainTetris extends JFrame implements Runnable{
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
+			String radio = e.getActionCommand();
 			if(e.getSource() == gameStart) {
 				needShape = true;
-				fullRow = false;
-				gameEnd = false;
 				start();
 			}
 			else if(e.getSource() == gameExit) {
@@ -675,14 +685,24 @@ public class MainTetris extends JFrame implements Runnable{
 			}
 			else if(e.getSource() == btnGameReStart) {
 				needShape = false;
-				fullRow = false;
-				gameEnd = false;
 				start();
 				autoClick();
 			}
 			else if(e.getSource() == btnGamePause) {
 				gameEnd = true;
 				autoClick();
+			}
+			else if(radio.equals(radioHighLevel.getText())) {
+				plusScore = 30;
+				threadSpeed = 300;
+			}
+			else if(radio.equals(radioNormalLevel.getText())) {
+				plusScore = 10;
+				threadSpeed = 600;
+			}
+			else if(radio.equals(radioLowLevel.getText())) {
+				plusScore = 5;
+				threadSpeed = 1000;
 			}
 		}
 	};

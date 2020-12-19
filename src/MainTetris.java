@@ -1,10 +1,7 @@
-import java.awt.AWTException;
 import java.awt.Color;
 import java.awt.GridLayout;
-import java.awt.Robot;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
@@ -233,8 +230,8 @@ public class MainTetris extends JFrame implements Runnable{
 				bj.addKeyListener(new MyKeyListener());
 				}
 			}
-		makeRecordArray();
-		drawBackGround();
+		makeRecordArray(); // 기록용 배열 세팅
+		drawBackGround(); // 테트리스 배경 세팅
 		setVisible(true);
 		}
 
@@ -242,7 +239,7 @@ public class MainTetris extends JFrame implements Runnable{
 		new MainTetris();
 	}
 	
-	public void start() {
+	public void start() { // 쓰레드 start 메소드
 		fullRow = false;
 		gameEnd = false;
 		tetris = new Thread(this);
@@ -251,13 +248,14 @@ public class MainTetris extends JFrame implements Runnable{
 
 	public void run() {
 		try {
-			while(!gameEnd) {
+			while(!gameEnd) { // gameEnd flag에 따라서
 				if(needShape) { // 블럭이 필요한 경우 랜덤 생성
 					shapeNumber = (int)Math.floor(Math.random()*7);// 0~6 
-					randomFigure = makeShape(shapeNumber);
-					eleNew = randomFigure.transferArray();
-					needShape = false;
-					if(checkShapetoShape(eleNew)) {
+					randomFigure = makeShape(shapeNumber); // 랜덤 숫자를 함수에 넣어서 랜덤 도형 배열을 생성
+					eleNew = randomFigure.transferArray(); // eleNew 배열로 생성한 도형배열을 복사
+					needShape = false; // 생성 후 false로 바꿔준다.
+					
+					if(checkShapetoShape(eleNew)) { // 종료조건 : 새로 생성되는 도형과 겹칠 시
 						drawCurrentShape(); // 도형 겹치는거 보여주고 종료
 						gameEnd = true;
 						JOptionPane.showMessageDialog(null, "Game Over!\n"
@@ -270,13 +268,10 @@ public class MainTetris extends JFrame implements Runnable{
 				}
 				// 한줄 지우기 코드
 				eraseFullRow();
-				
 				// 배경 reset 코드
 				drawBackGround();
-				
 				// 그리기 코드
 				drawCurrentShape();
-				
 				// 방향에 맞춰서 도형 움직이는 코드 / default는 downDirection
 				move();
 				
@@ -287,7 +282,13 @@ public class MainTetris extends JFrame implements Runnable{
 		}
 	}
 	
-	public void eraseFullRow() {
+	public Shape makeShape(int shapeNumber) { // 랜덤 도형 생성 함수
+		Shape randomShape = new Shape(shapeNumber);
+		
+		return randomShape;
+	}
+	
+	public void eraseFullRow() { // 줄 지우기 코드
 		for(int row = 0 ; row < formHeight ; row++) {
 			fullRow = true;
 			for(int col = 0 ; col < formWidth ; col++) {
@@ -308,7 +309,7 @@ public class MainTetris extends JFrame implements Runnable{
 		}
 	}
 	
-	public void drawBackGround() {
+	public void drawBackGround() { // 기록 배열에 기록되어 있는 정보를 통해 테트리스판에 paint
 		for(int row = 2 ; row < formHeight ; row++) {
 			for(int col = 0 ; col < formWidth ; col++) {
 				if(recordArray[row][col] == -1)
@@ -324,14 +325,14 @@ public class MainTetris extends JFrame implements Runnable{
 		}
 	}
 	
-	public void drawCurrentShape() {
+	public void drawCurrentShape() { // 현재 도형을 그리기
 		for(int i = 0 ; i < 4 ; i++) {
 			JButton jb = b[eleNew[i].centerHeight][eleNew[i].centerWidth];
 			jb.setBackground(colorBox[shapeNumber]);
 		}
 	}
 		
-	public void move() {
+	public void move() { // 도형 이동 함수(left, right, down, rotation)
 			if(isLeft) {
 				eleNew = moveShape(eleNew, leftDirection);
 				isLeft = false;
@@ -353,25 +354,14 @@ public class MainTetris extends JFrame implements Runnable{
 				eleNew = moveShape(eleNew, downDirection);
 		}
 	
-	public Shape makeShape(int shapeNumber) {
-		Shape randomShape = new Shape(shapeNumber);
-		
-		return randomShape;
-	}
-	
-	public void makingNewShape() {
-		shapeNumber = (int)Math.floor(Math.random()*7);// 0~6 
-		randomFigure = makeShape(shapeNumber);
-	}
-	
-	public Element[] moveShape(Element[] currentElement, int direction) { // 코드 단순화하기
+	public Element[] moveShape(Element[] currentElement, int direction) {
 		// 1. 못 움직이는 경우 ( x나 y가 jFrame을 벗어나는 경우)
 		// 2. 움직이는 경우 (좌표를 더해준다)
 		boolean flag = false; // 충돌플래그 = true면 충돌
 		boolean rotationFlag = false; // 회전시 양쪽 경계값 충돌 플래그 = true면 회전하면서 양쪽 경계값 벗어난것
 		
 		Element [] updateElement = new Element[4];
-		for(int i = 0 ; i < 4 ; i++) {
+		for(int i = 0 ; i < 4 ; i++) { // 이동용 배열을 생성
 			updateElement[i] = new Element(0,0,currentElement[i].colorNum);
 		}
 		switch (direction) {
@@ -400,7 +390,6 @@ public class MainTetris extends JFrame implements Runnable{
 			}
 			else {
 				// 왼쪽, 오른쪽은 움직이는것만 안되는것이고, recordArray에 기록하면 안됨.
-				//addShapeToRecord(currentElement);
 				return currentElement; // 이동이 불가능하면 기존 배열을 리턴
 			}
 		
@@ -429,7 +418,6 @@ public class MainTetris extends JFrame implements Runnable{
 			}
 			else {
 				//왼쪽, 오른쪽은 움직이는것만 안되는것이고, recordArray에 기록하면 안됨.
-				//addShapeToRecord(currentElement);
 				return currentElement; // 이동이 불가능하면 기존 배열을 리턴
 			}
 			
@@ -457,8 +445,8 @@ public class MainTetris extends JFrame implements Runnable{
 				return updateElement; // 이동이 가능하면 update배열을 리턴
 			}
 			else {
-				addShapeToRecord(currentElement);
-				return currentElement; // 이동이 불가능하면 기존 배열을 리턴
+				addShapeToRecord(currentElement); // 아래의 경우는 기록을 해야함.
+				return currentElement; // 이동이 불가능하면 기존 배열을 리턴 후 새로운 도형 생성
 			}
 			
 		case 3: // rotation
@@ -486,9 +474,9 @@ public class MainTetris extends JFrame implements Runnable{
 			}
 			
 			if(rotationFlag == true) { //회전하다가 양쪽 벽에 부딪혔을때는 배열에 기록하지 않고 그냥 현재 배열만 반환
-				return currentElement;
+				return currentElement; // 종료를 안하면 checkShapetoShape함수에서 배열예외오류가 발생한다.
 			}
-			else { // 현재 rotation했을때 배열index에러는 checkShapetoShape에서 검사할때 범위 넘어가서 생긴다
+			else { 
 				if(!flag && checkShapetoShape(updateElement)) { // 경계체크
 					flag = true;
 					needShape = true;
@@ -508,7 +496,7 @@ public class MainTetris extends JFrame implements Runnable{
 		return updateElement;
 	}
 	
-	public void makeRecordArray() { // record용 array 20*10배열 초기화
+	public void makeRecordArray() { // record용 array를 20*10배열 초기화
 		recordArray = new int[formHeight][formWidth];
 		for(int i = 0 ; i < formHeight ; i++) {
 			for(int j = 0 ; j < formWidth ; j++) {
@@ -516,7 +504,7 @@ public class MainTetris extends JFrame implements Runnable{
 			}
 		}
 	}
-	public void resetRecordArray() {
+	public void resetRecordArray() { // record용 array를 초기값으로 초기화
 		for(int i = 0 ; i < formHeight ; i++) {
 			for(int j = 0 ; j < formWidth ; j++) {
 				recordArray[i][j] = -1;
@@ -529,7 +517,7 @@ public class MainTetris extends JFrame implements Runnable{
 			recordArray[shape[i].centerHeight][shape[i].centerWidth] = shape[i].colorNum;
 		}
 	}
-	public boolean checkShapetoShape(Element[] shape) { 
+	public boolean checkShapetoShape(Element[] shape) { // 다른 도형과 충돌 체크 함수(도형이 움직이는 자리에 빈칸(-1)이 아닌 다른 수가 저장되어 있을 경우 false)
 		boolean checkFlag = false;
 		for(int i = 0 ; i < 4 ; i++) {
 			if( recordArray[shape[i].centerHeight][shape[i].centerWidth] != -1) {
@@ -540,7 +528,7 @@ public class MainTetris extends JFrame implements Runnable{
 		return checkFlag;
 	}
 	
-	public void saveRecordArray() {
+	public void saveRecordArray() { // 현재 게임 내용 저장
 		String output = "C:\\homework\\tetrisResult.txt"; // c\:homework 폴더
 		File file = new File(output);
 		try {
@@ -560,7 +548,7 @@ public class MainTetris extends JFrame implements Runnable{
 		}
 	}
 	
-	public void loadRecordArray() {
+	public void loadRecordArray() { // 저장된 게임 내용 불러오기
 		String output = "C:\\homework\\tetrisResult.txt"; // c\:homework 폴더
 		File file = new File(output);
 		try {
@@ -592,11 +580,10 @@ public class MainTetris extends JFrame implements Runnable{
 	class MyKeyListener extends KeyAdapter{
 		@Override
 		public void keyTyped(KeyEvent e) {
-		
 		}
 
 		@Override
-		public void keyPressed(KeyEvent e) {
+		public void keyPressed(KeyEvent e) { // 키 이벤트
 			switch(e.getKeyCode()) {
 			case KeyEvent.VK_UP:
 				break;
@@ -620,7 +607,7 @@ public class MainTetris extends JFrame implements Runnable{
 		}
 	}
 	
-	ActionListener myActionListener = new ActionListener() {
+	ActionListener myActionListener = new ActionListener() { // 메뉴 클릭 리스너
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
@@ -636,10 +623,10 @@ public class MainTetris extends JFrame implements Runnable{
 			else if(e.getSource() == gameExit) {
 				gameEnd = true;
 				tetris = null; // thread에 null값을 넣어주기.
-				resetRecordArray();
-				drawBackGround();
-				gameScore = 0;
-				textGameScore.setText("  Score : "+gameScore);
+				resetRecordArray(); // 배열 초기화
+				drawBackGround(); // 테트리스 판 초기화
+				gameScore = 0; // 점수 초기화
+				textGameScore.setText("  Score : "+gameScore); // 점수판 초기화
 			}
 			else if(e.getSource() == programExit) { // 완전 창을 종료
 				setVisible(false);
@@ -647,16 +634,15 @@ public class MainTetris extends JFrame implements Runnable{
 				System.exit(0);
 			}
 			else if(e.getSource() == gameSave) {
-				gameEnd = true; // 쓰레드 멈추고
-				saveRecordArray();
+				gameEnd = true; // 쓰레드 멈추기
+				saveRecordArray(); // 게임 상태 저장
 				JOptionPane.showMessageDialog(null, "저장되었습니다!", "테트리스", JOptionPane.INFORMATION_MESSAGE);
 			}
-			else if(e.getSource() == gameLoad) {
-				// 게임 불러오기 - 파일 출력으로 recordArray에 복사하기 -> 불러와서 그리기까지 해야한다.
-				gameEnd = true; // 쓰레드 멈추고
+			else if(e.getSource() == gameLoad) { 
+				gameEnd = true; // 쓰레드 멈추기
 				loadRecordArray(); // recordArray에 복사 완료
-				drawBackGround();
-				textGameScore.setText("  Score : "+gameScore);
+				drawBackGround(); // 불러온 배열 테트리스판에 그리기
+				textGameScore.setText("  Score : "+gameScore); // 점수 내용도 불러오기
 			}
 			else if(e.getSource() == gameTip) {
 				JOptionPane.showMessageDialog(null, "테트리스 게임 도움말\n기본 조작키 : 왼쪽,오른쪽,아래 방향키 + 회전 : 스페이스바"
@@ -671,15 +657,16 @@ public class MainTetris extends JFrame implements Runnable{
 						+ "\n - 난이도 : 블럭의 속도가 달라지며, 스코어도 난이도에 따라 부여됩니다."
 						, "테트리스 도움말", JOptionPane.PLAIN_MESSAGE);
 			}
-			else if(e.getSource() == btnGameReStart) {
+			else if(e.getSource() == btnGameReStart) { // 재시작함수(정지된 상태 그대로 다시 시작시킨다)
 				needShape = false;
 				start();
 				focusUnCheck();
 			}
-			else if(e.getSource() == btnGamePause) {
+			else if(e.getSource() == btnGamePause) { // 일시 정지
 				gameEnd = true;
 				focusUnCheck();
 			}
+			//난이도 radio button
 			else if(radio.equals(radioHighLevel.getText())) {
 				plusScore = 30;
 				threadSpeed = 300;
@@ -695,7 +682,7 @@ public class MainTetris extends JFrame implements Runnable{
 		}
 	};
 	
-	void focusUnCheck() {
+	void focusUnCheck() { // 버튼에 focus 해제
 		btnGameReStart.setFocusable(false);
 		btnGamePause.setFocusable(false);
 		radioHighLevel.setFocusable(false);

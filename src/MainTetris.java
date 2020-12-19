@@ -340,6 +340,7 @@ public class MainTetris extends JFrame implements Runnable{
 		// 1. 못 움직이는 경우 ( x나 y가 jFrame을 벗어나는 경우)
 		// 2. 움직이는 경우 (좌표를 더해준다)
 		boolean flag = false; // 충돌플래그 = true면 충돌
+		boolean rotationFlag = false;
 		
 		Element [] updateElement = new Element[4];
 		for(int i = 0 ; i < 4 ; i++) {
@@ -446,27 +447,34 @@ public class MainTetris extends JFrame implements Runnable{
 				updateElement[i].centerHeight = standardX + tempWidth; // x = y
 				updateElement[i].centerWidth = standardY - tempHeight; // y = -x
 	
-//				updateElement[i].centerWidth > formWidth - 1 ||
-//				|| updateElement[i].centerWidth < 0) 
-				if(
-						updateElement[i].centerHeight > formHeight - 1)
-						{ // 회전이동이므로 모든 조건
+				if(updateElement[i].centerHeight > formHeight - 1)
+						{
 					flag = true; // 충돌
 					break;
 				}
+				if(updateElement[i].centerWidth > formWidth - 1 ||
+						updateElement[i].centerWidth < 0) {
+					 rotationFlag = true;
+					 break;
+				 }
 			}
 			
-			if(!flag && checkShapetoShape(updateElement)) { // 경계체크
-				flag = true;
-				needShape = true;
+			if(rotationFlag == true) { //회전하다가 양쪽 벽에 부딪혔을때는 배열에 기록하지 않고 그냥 현재 배열만 반환
+				return currentElement;
 			}
-			
-			if(flag == false) {
-				return updateElement; // 이동이 가능하면 update배열을 리턴
-			}
-			else {
-				addShapeToRecord(currentElement);
-				return currentElement; // 이동이 불가능하면 기존 배열을 리턴
+			else { // 현재 rotation했을때 배열index에러는 checkShapetoShape에서 검사할때 범위 넘어가서 생긴다
+				if(!flag && checkShapetoShape(updateElement)) { // 경계체크
+					flag = true;
+					needShape = true;
+				}
+				
+				if(flag == false && rotationFlag == false) {
+					return updateElement; // 이동이 가능하면 update배열을 리턴
+				}
+				else if(flag == true && rotationFlag == false){ // 기본 flag == true
+					addShapeToRecord(currentElement);
+					return currentElement; // 이동이 불가능하면 기존 배열을 리턴
+				}
 			}
 			
 		} //switch 종료

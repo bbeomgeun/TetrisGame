@@ -1,7 +1,10 @@
+import java.awt.AWTException;
 import java.awt.Color;
 import java.awt.GridLayout;
+import java.awt.Robot;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
@@ -12,14 +15,13 @@ import java.io.PrintWriter;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import java.awt.BorderLayout;
-import javax.swing.JTextField;
-import javax.swing.JLabel;
+import javax.swing.JRadioButton;
 
 class Element{
 	//중심점 x,y를 잡고 이것을 중심으로 +-으로 도형 표현할 것이다.
@@ -131,7 +133,8 @@ public class MainTetris extends JFrame implements Runnable{
 	JMenu menu_game, menu_file, menu_guide;
 	JMenuItem gameStart, gameExit, programExit, gameSave, gameLoad, gameTip;
 	JButton btnGameReStart, btnGamePause;
-	JLabel textGameScore;
+	JLabel textGameScore, textLevelInfo;
+	JRadioButton radioHighLevel, radioNormalLevel, radioLowLevel;
 	
 	public MainTetris() {
 		// 메뉴 구성
@@ -167,14 +170,20 @@ public class MainTetris extends JFrame implements Runnable{
 		gameTip = new JMenuItem("게임 도움말");
 		gameTip.addActionListener(myActionListener);
 		
-		btnGameReStart = new JButton("게임 재시작하기");
+		btnGameReStart = new JButton("재시작");
 		btnGameReStart.addActionListener(myActionListener);
 		
-		btnGamePause = new JButton("게임 일시중지");
+		btnGamePause = new JButton("일시 정지");
 		btnGamePause.addActionListener(myActionListener);
 		
 		textGameScore = new JLabel();
-		textGameScore.setText("Score : "+gameScore);
+		textGameScore.setText("  Score : 0");
+		
+		textLevelInfo = new JLabel("  난이도  ");
+		
+		radioHighLevel = new JRadioButton("상");
+		radioNormalLevel = new JRadioButton("중");
+		radioLowLevel = new JRadioButton("하");
 		
 		menu_game.add(gameStart);
 		menu_game.add(gameExit);
@@ -187,6 +196,12 @@ public class MainTetris extends JFrame implements Runnable{
 		
 		menuBar.add(btnGameReStart);
 		menuBar.add(btnGamePause);
+		
+		menuBar.add(textLevelInfo);
+		menuBar.add(radioHighLevel);
+		menuBar.add(radioNormalLevel);
+		menuBar.add(radioLowLevel);
+		
 		menuBar.add(textGameScore);
 		
 		setSize(600, 1000); // JFrame 사이즈
@@ -194,13 +209,8 @@ public class MainTetris extends JFrame implements Runnable{
 		// 테트리스 판 세팅
 		main.setLayout(new GridLayout(formHeight, formWidth));
 		main.setSize(550, 1000); 
-		
-		// 미리보기 세팅
-		//sub.setLayout(new GridLayout(4,4));
-		//sub.setSize(100, 100);
-		
+
 		getContentPane().add(main);
-//		getContentPane().add(sub);
 		
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // 정상 종료
 		
@@ -216,16 +226,6 @@ public class MainTetris extends JFrame implements Runnable{
 			}
 		makeRecordArray();
 		drawBackGround();
-		
-//		preview = new JButton[4][4];
-//		
-//		for(int r = 0 ; r < 4 ; r++) {
-//			for(int c = 0 ; c < 4 ; c++) {
-//				preview[r][c] = new JButton();
-//				sub.add(preview[r][c]);
-//			}
-//		}
-		
 		setVisible(true);
 		}
 
@@ -289,7 +289,7 @@ public class MainTetris extends JFrame implements Runnable{
 					recordArray[row][col] = -1; // 해당 row 값 0으로 만들기
 				}
 				gameScore += 10; // 점수 더해주기
-				textGameScore.setText("Score : "+gameScore);
+				textGameScore.setText("  Score : "+gameScore);
 				for(int tempRow = row ; tempRow >0 ; tempRow--) { // 한 줄씩 밑으로 내려주기
 					recordArray[tempRow] = recordArray[tempRow-1];
 				}
@@ -678,16 +678,22 @@ public class MainTetris extends JFrame implements Runnable{
 				fullRow = false;
 				gameEnd = false;
 				start();
-				btnGameReStart.setFocusable(false);
-				btnGamePause.setFocusable(false);
-				main.setFocusable(true);
+				autoClick();
 			}
 			else if(e.getSource() == btnGamePause) {
 				gameEnd = true;
-				btnGameReStart.setFocusable(false);
-				btnGamePause.setFocusable(false);
-				main.setFocusable(true);
+				autoClick();
 			}
 		}
 	};
+	
+	void autoClick() {
+		try {
+			Robot robot = new Robot();
+			robot.mouseMove(300,500);
+			robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
+		} catch (AWTException e) {
+			e.printStackTrace();
+		}
+	}
 }

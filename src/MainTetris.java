@@ -18,6 +18,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
+import javax.swing.JTextField;
+import javax.swing.JLabel;
 
 class Element{
 	//중심점 x,y를 잡고 이것을 중심으로 +-으로 도형 표현할 것이다.
@@ -128,6 +130,8 @@ public class MainTetris extends JFrame implements Runnable{
 	JMenuBar menuBar;
 	JMenu menu_game, menu_file, menu_guide;
 	JMenuItem gameStart, gameExit, programExit, gameSave, gameLoad, gameTip;
+	JButton btnGameReStart, btnGamePause;
+	JLabel textGameScore;
 	
 	public MainTetris() {
 		// 메뉴 구성
@@ -163,6 +167,15 @@ public class MainTetris extends JFrame implements Runnable{
 		gameTip = new JMenuItem("게임 도움말");
 		gameTip.addActionListener(myActionListener);
 		
+		btnGameReStart = new JButton("게임 재시작하기");
+		btnGameReStart.addActionListener(myActionListener);
+		
+		btnGamePause = new JButton("게임 일시중지");
+		btnGamePause.addActionListener(myActionListener);
+		
+		textGameScore = new JLabel();
+		textGameScore.setText("Score : "+gameScore);
+		
 		menu_game.add(gameStart);
 		menu_game.add(gameExit);
 		menu_game.add(programExit);
@@ -171,6 +184,10 @@ public class MainTetris extends JFrame implements Runnable{
 		menu_file.add(gameLoad);
 		
 		menu_guide.add(gameTip);
+		
+		menuBar.add(btnGameReStart);
+		menuBar.add(btnGamePause);
+		menuBar.add(textGameScore);
 		
 		setSize(600, 1000); // JFrame 사이즈
 		
@@ -233,7 +250,8 @@ public class MainTetris extends JFrame implements Runnable{
 						drawCurrentShape(); // 도형 겹치는거 보여주고 종료
 						gameEnd = true;
 						JOptionPane.showMessageDialog(null, "Game Over!\n"
-								+ "블럭 생성 구간까지 벽돌이 쌓이면 종료 돼요.", "테트리스", JOptionPane.ERROR_MESSAGE);
+								+ "블럭 생성 구간까지 벽돌이 쌓이면 종료입니다.\n"
+								+ "최종 스코어 : " + gameScore, "테트리스", JOptionPane.ERROR_MESSAGE);
 						resetRecordArray();
 						drawBackGround();
 						break;
@@ -241,8 +259,6 @@ public class MainTetris extends JFrame implements Runnable{
 				}
 				// 한줄 지우기 코드
 				eraseFullRow();
-				
-				System.out.println(gameScore);
 				
 				// 배경 reset 코드
 				drawBackGround();
@@ -273,6 +289,7 @@ public class MainTetris extends JFrame implements Runnable{
 					recordArray[row][col] = -1; // 해당 row 값 0으로 만들기
 				}
 				gameScore += 10; // 점수 더해주기
+				textGameScore.setText("Score : "+gameScore);
 				for(int tempRow = row ; tempRow >0 ; tempRow--) { // 한 줄씩 밑으로 내려주기
 					recordArray[tempRow] = recordArray[tempRow-1];
 				}
@@ -340,7 +357,7 @@ public class MainTetris extends JFrame implements Runnable{
 		// 1. 못 움직이는 경우 ( x나 y가 jFrame을 벗어나는 경우)
 		// 2. 움직이는 경우 (좌표를 더해준다)
 		boolean flag = false; // 충돌플래그 = true면 충돌
-		boolean rotationFlag = false;
+		boolean rotationFlag = false; // 회전시 양쪽 경계값 충돌 플래그 = true면 회전하면서 양쪽 경계값 벗어난것
 		
 		Element [] updateElement = new Element[4];
 		for(int i = 0 ; i < 4 ; i++) {
@@ -637,6 +654,7 @@ public class MainTetris extends JFrame implements Runnable{
 			else if(e.getSource() == gameSave) {
 				gameEnd = true; // 쓰레드 멈추고
 				saveRecordArray();
+				JOptionPane.showMessageDialog(null, "저장되었습니다!", "테트리스", JOptionPane.INFORMATION_MESSAGE);
 			}
 			else if(e.getSource() == gameLoad) {
 				// 게임 불러오기 - 파일 출력으로 recordArray에 복사하기 -> 불러와서 그리기까지 해야한다.
@@ -654,6 +672,21 @@ public class MainTetris extends JFrame implements Runnable{
 						+ "\n - 게임 불러오기 : 저장했던 테트리스를 불러옵니다."
 						+ "\n ** 게임 저장 및 불러오기 이후 게임 시작을 다시 누르면 이어서 게임이 진행됩니다 **"
 						, "테트리스 도움말", JOptionPane.PLAIN_MESSAGE);
+			}
+			else if(e.getSource() == btnGameReStart) {
+				needShape = false;
+				fullRow = false;
+				gameEnd = false;
+				start();
+				btnGameReStart.setFocusable(false);
+				btnGamePause.setFocusable(false);
+				main.setFocusable(true);
+			}
+			else if(e.getSource() == btnGamePause) {
+				gameEnd = true;
+				btnGameReStart.setFocusable(false);
+				btnGamePause.setFocusable(false);
+				main.setFocusable(true);
 			}
 		}
 	};
